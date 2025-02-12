@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fluttermoji/fluttermoji.dart';
 import 'home_page.dart';
@@ -6,16 +7,9 @@ import 'home_page.dart';
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
-  Future<String?> fetchUsername(String userId) async {
-    final supabase = Supabase.instance.client;
-    final response =
-        await supabase.from('users_data').select('username').limit(1).single();
-
-    if (response['username'] != null) {
-      return response['username'];
-    } else {
-      return null;
-    }
+  Future<String?> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('username');
   }
 
   @override
@@ -59,106 +53,54 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
       );
-    } else {
-      // Handle logged-in users, fetch username asynchronously
-      return FutureBuilder<String?>(
-        future: fetchUsername(currentUser.id),
+    }  return Scaffold(
+      body: FutureBuilder<String?>(
+        future: getUsername(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            // Show loading indicator while fetching data
-            return const Scaffold(
-              body: Center(
-                child: Center(),
-              ),
-            );
-          } else if (snapshot.hasError) {
-            // Handle error case if fetching username fails
-            return Scaffold(
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Unable to load profile'),
-                    Text('Error: ${snapshot.error}'),
-                    const SizedBox(height: 20),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomePage()),
-                        );
-                      },
-                      child: const Text('Back to Home'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else if (snapshot.hasData) {
-            // If data is successfully fetched, display username
-            final username = snapshot.data;
 
-            return Scaffold(
-              body: Center(
-                child: Column(
+          final username = snapshot.data ?? 'Unknown';
+
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.only(
+                      top: 35, bottom: 25, right: 15, left: 15),
+                  child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.only(top: 35, bottom: 25, right: 15, left: 15),
-                        child: Row(
-                          children: [
-                            const Icon(
-                                Icons.person,
-                                size: 30, color: Colors.black),
-                            const Spacer(),
-                            GestureDetector(
-                              onTap: () {
-                                supabase.auth.signOut();
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => HomePage()),
-                                );
-                              },
-                              child: const Icon(
-                                Icons.logout,
-                                size: 30,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
+                      const Icon(Icons.person, size: 30, color: Colors.black),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          supabase.auth.signOut();
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const HomePage()),
+                          );
+                        },
+                        child: const Icon(
+                          Icons.logout,
+                          size: 30,
+                          color: Colors.black,
                         ),
                       ),
-                      FluttermojiCircleAvatar(),
-                      Padding(padding: const EdgeInsets.only(top: 20)),
-                      Text('Username: $username'),
-                    ]),
-              ),
-            );
-          } else {
-            // Handle case where username is not found in the database
-            return Scaffold(
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Username not found'),
-                    const SizedBox(height: 20),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomePage()),
-                        );
-                      },
-                      child: const Text('Back to Home'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }
+                const SizedBox(height: 20),
+                FluttermojiCircleAvatar(),
+                const SizedBox(height: 20),
+                Text(
+                  'Username: $username',
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ],
+            ),
+          );
         },
-      );
-    }
+      ),
+    );
   }
 }

@@ -1,7 +1,8 @@
 import 'package:cs_app2/quiz_main_page.dart';
 import 'package:flutter/material.dart';
-import 'package:cs_app2/create_account.dart';
-import 'package:cs_app2/login.dart';
+import 'package:cs_app2/sign_up.dart';
+import 'package:cs_app2/sign_in.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 //build main page for sign in and sign up and guest mode
 class HomePage extends StatelessWidget {
@@ -11,10 +12,10 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Column(
-          children: [
-            Padding(padding: const EdgeInsets.only(top: 30)),
-            Center(
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      children: [
+        Padding(padding: const EdgeInsets.only(top: 30)),
+        Center(
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             Image.asset(
               'assets/AppImage.png',
               fit: BoxFit.cover,
@@ -28,7 +29,7 @@ class HomePage extends StatelessWidget {
               height: MediaQuery.of(context).size.height * 0.14,
             ),
             Container(
-              margin: const EdgeInsets.only(top: 15),
+              margin: const EdgeInsets.only(top: 10),
               child: const Text(
                 'WELCOME!',
                 style: TextStyle(fontSize: 30),
@@ -37,7 +38,7 @@ class HomePage extends StatelessWidget {
             Container(
               width: 150,
               height: 40,
-              margin: const EdgeInsets.only(top: 20),
+              margin: const EdgeInsets.only(top: 10),
               child: TextButton(
                 style: ButtonStyle(
                     backgroundColor:
@@ -55,7 +56,7 @@ class HomePage extends StatelessWidget {
             Container(
               width: 150,
               height: 40,
-              margin: const EdgeInsets.only(top: 20),
+              margin: const EdgeInsets.only(top: 10),
               child: TextButton(
                 style: ButtonStyle(
                     backgroundColor:
@@ -66,30 +67,52 @@ class HomePage extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => LoginPage()),
                   );
                 },
-                child: const Text('Sign In', style: TextStyle(color: Colors.white)),
+                child: const Text('Sign In',
+                    style: TextStyle(color: Colors.white)),
               ),
             ),
             Container(
               width: 150,
               height: 40,
-              margin: const EdgeInsets.only(top: 20),
+              margin: const EdgeInsets.only(top: 10),
               child: TextButton(
                 style: ButtonStyle(
                     backgroundColor:
-                        WidgetStateProperty.all(const Color(0xff000000))),
+                        WidgetStateProperty.all(const Color(0xff6200EE))),
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const QuizMainPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const QuizMainPage()),
                   );
                 },
                 child: const Text('Continue As Guest',
                     style: TextStyle(color: Colors.white)),
               ),
             ),
-                  ]),
+
+            Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: Text("------------------------------ OR CONTINUE WITH -------------------------------"),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center, // Center the icons horizontally
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    FontAwesomeIcons.google,
+                    size: 35,
+                  ),
+                  onPressed: () {
+                    print('Google clicked');
+                  },
+                  splashRadius: 25, // Adjust splash radius for animation
                 ),
-          ],
-        ));
+              ],
+            ),
+          ]),
+        ),
+      ],
+    ));
   }
 }

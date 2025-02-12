@@ -1,3 +1,6 @@
+import 'package:cs_app2/Quiz%20Advanced/advanced_main_page.dart';
+import 'package:cs_app2/Quiz%20Easy/easy_main_page.dart';
+import 'package:cs_app2/Quiz%20Medium/medium_main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cs_app2/leaderboard.dart';
 import 'package:cs_app2/profile_customization_page.dart';
@@ -18,10 +21,10 @@ class _QuizMainPageState extends State<QuizMainPage> {
 
   // Pages for navigation
   final List<Widget> _pages = [
-    const QuizHomePage(),               // Home page widget
-    ProfileCustomizationPage(),     // Profile customization page
-    LeaderboardPage(),              // Leaderboard page
-    ProfilePage(),                  // Profile page
+    const QuizHomePage(), // Home page widget
+    ProfileCustomizationPage(), // Profile customization page
+    LeaderboardPage(), // Leaderboard page
+    ProfilePage(), // Profile page
   ];
 
   @override
@@ -35,40 +38,107 @@ class _QuizMainPageState extends State<QuizMainPage> {
           // Show the row only on the home page
           if (_page == 0)
             Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 35, left: 15.0),
-                    child: const Icon(Icons.home, size: 30, color: Colors.black),
-                  ),
-                  const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 35, right: 15.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => InfoPage()),
-                        );
-                      },
-                      child: const Icon(
-                        Icons.info_outline,
-                        size: 30,
-                        color: Colors.black,
-                      ),
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 35, left: 15.0),
+                          child: const Icon(Icons.home,
+                              size: 30, color: Colors.black),
+                        ),
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 35, right: 15.0),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => InfoPage()),
+                              );
+                            },
+                            child: const Icon(
+                              Icons.info_outline,
+                              size: 30,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ),
+                    Center(
+                        child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height,
+                            // adjust the height as needed
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: WidgetStateProperty.all(
+                                        const Color(0xff6200EE)),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => EasyMainPage()),
+                                    );
+                                  },
+                                  child: const Text('Easy',
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: WidgetStateProperty.all(
+                                        const Color(0xff6200EE)),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              MediumMainPage()),
+                                    );
+                                  },
+                                  child: const Text('Medium',
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: WidgetStateProperty.all(
+                                        const Color(0xff6200EE)),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              AdvancedMainPage()),
+                                    );
+                                  },
+                                  child: const Text('Advanced',
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            )),
+                      ],
+                    )),
+                  ],
+                )),
         ],
       ),
       bottomNavigationBar: CurvedNavigationBar(
         key: _bottomNavigationKey,
-        index: _page, // Set the current index
+        index: _page,
+        // Set the current index
         height: 50.0,
         items: const <Widget>[
           Icon(Icons.home, size: 30, color: Colors.black),
@@ -78,7 +148,8 @@ class _QuizMainPageState extends State<QuizMainPage> {
         ],
         color: Colors.white,
         buttonBackgroundColor: Colors.white,
-        backgroundColor: Colors.blueAccent, // Adjusted for better visibility
+        backgroundColor: Colors.blueAccent,
+        // Adjusted for better visibility
         animationCurve: Curves.easeInOut,
         animationDuration: const Duration(milliseconds: 600),
         onTap: (index) {
@@ -97,11 +168,6 @@ class QuizHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Home Page Content',
-        style: TextStyle(fontSize: 24, color: Colors.black),
-      ),
-    );
+    return Container();
   }
 }

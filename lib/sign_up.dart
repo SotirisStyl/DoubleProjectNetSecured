@@ -1,6 +1,5 @@
 import 'package:cs_app2/home_page.dart';
 import 'package:flutter/material.dart';
-import 'package:bcrypt/bcrypt.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -57,18 +56,15 @@ class _SignUpPageState extends State<SignUpPage> {
         return;
       }
 
-      final hashedPassword =
-          BCrypt.hashpw(passwordController.text.trim(), BCrypt.gensalt());
-
       await Supabase.instance.client.from('users_data').insert({
         'username': usernameController.text.trim(),
-        'email': emailController.text.trim(),
-        'password_hash': hashedPassword,
+        'email': emailController.text.trim()
       });
 
       await Supabase.instance.client.auth.signUp(
           email: emailController.text.trim(),
-          password: passwordController.text.trim());
+          password: passwordController.text.trim()
+      );
 
       _showMessage('Sign up successful!');
 
@@ -95,7 +91,6 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -113,14 +108,14 @@ class _SignUpPageState extends State<SignUpPage> {
               height: MediaQuery.of(context).size.height * 0.14,
             ),
             Container(
-              margin: const EdgeInsets.only(top: 25),
+              margin: const EdgeInsets.only(top: 5),
               child: const Text(
                 'Sign Up!',
                 style: TextStyle(fontSize: 30),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 35),
               child: TextField(
                 controller: usernameController,
                 decoration: const InputDecoration(
@@ -128,7 +123,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 35),
               child: TextField(
                 controller: emailController,
                 decoration: const InputDecoration(
@@ -136,7 +131,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 35),
               child: TextField(
                 controller: passwordController,
                 decoration: const InputDecoration(
@@ -144,7 +139,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 obscureText: true,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             isLoading
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
