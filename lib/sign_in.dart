@@ -1,7 +1,8 @@
-import 'package:cs_app2/quiz_main_page.dart';
+import 'package:cs_app2/app_main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'main.dart';
+import 'app_initializer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatelessWidget {
   // Controllers for user input
@@ -10,33 +11,54 @@ class LoginPage extends StatelessWidget {
 
   LoginPage({super.key});
 
-  // Function to sign in
   Future<void> signIn(BuildContext context) async {
     try {
       // Perform sign-in using Supabase
-      await supabase.auth.signInWithPassword(
+      final AuthResponse response = await supabase.auth.signInWithPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      // Check if the widget is still mounted before showing a message
-      if (context.mounted) {
-        _showMessage(context, 'Sign In successful!');
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => QuizMainPage()));
+      final user = response.user;
+
+      if (user != null) {
+        // Store user ID in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_id', user.id);
+
+        final userResponse = await supabase
+            .from('users_data')
+            .select('username') // Fetch username column
+            .eq('email', user.email as Object) // Filter by user_id
+            .single();
+
+        if (context.mounted) {
+          String username = userResponse['username'];
+          await prefs.setString('username', username);
+
+          _showMessage(context, 'Sign In successful!');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => QuizMainPage()),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          _showMessage(context, 'Invalid email or password.');
+        }
       }
     } on AuthException {
-      // Handle authentication error
       if (context.mounted) {
         _showMessage(context, 'Invalid email or password.');
       }
     } catch (e) {
-      // Handle error and ensure context is still valid before showing message
       if (context.mounted) {
         _showMessage(context, 'An error occurred. Please try again.');
       }
     }
   }
+
+
 
   // Show messages using SnackBar
   void _showMessage(BuildContext context, String message) {

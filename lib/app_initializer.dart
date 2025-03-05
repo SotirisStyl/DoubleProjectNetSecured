@@ -1,4 +1,4 @@
-import 'package:cs_app2/quiz_main_page.dart';
+import 'package:cs_app2/app_main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_page.dart';

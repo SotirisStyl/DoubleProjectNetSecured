@@ -1,4 +1,4 @@
-import 'package:cs_app2/quiz_main_page.dart';
+import 'package:cs_app2/app_main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cs_app2/sign_up.dart';
 import 'package:cs_app2/sign_in.dart';
