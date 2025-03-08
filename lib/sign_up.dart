@@ -75,6 +75,7 @@ class _SignUpPageState extends State<SignUpPage> {
     } catch (e) {
       // Catch any unexpected errors
       _showMessage('An error occurred. Please try again.');
+      print(e);
     } finally {
       setState(() {
         isLoading = false;

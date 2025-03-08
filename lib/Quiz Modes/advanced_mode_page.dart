@@ -25,6 +25,7 @@ class AdvancedModePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Advanced Mode Quiz'),
+        backgroundColor: const Color(0xFF40C4FF),
       ),
       body: Center(
         child: SizedBox(

@@ -25,6 +25,7 @@ class BeginnerModePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Beginner Mode Quiz'),
+        backgroundColor: const Color(0xFF40C4FF),
       ),
       body: Center(
         child: SizedBox(

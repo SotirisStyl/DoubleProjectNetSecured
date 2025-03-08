@@ -54,6 +54,7 @@ class LoginPage extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         _showMessage(context, 'An error occurred. Please try again.');
+        print(e);
       }
     }
   }
