@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cs_app2/quiz_page.dart';
+import 'package:provider/provider.dart';
+
+import '../theme_provider.dart';
 
 class IntermediateModePage extends StatelessWidget {
   final String difficulty; // Add difficulty parameter
@@ -9,15 +12,15 @@ class IntermediateModePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Map<String, String> tableNames = {
-      'Privacy': 'privacy_questions',
       'Cyber Hygiene': 'cyber_hygiene_questions',
       'Safe Internet Usage': 'safe_internet_usage_questions',
-      'Social Cyber Attacks': 'social_cyber_attacks_questions',
+      'Social Cyber Attaches': 'social_cyber_attaches_questions',
       'Basic Email Security': 'basic_email_security_questions',
       'Social Media Security': 'social_media_security_questions',
-      'Safety and Security Issues': 'safety_security_issues_questions',
+      'IOT and Ai in Cybersecurity': 'iot_and_ai_in_cybersecurity_questions',
       'Recognizing Social Engineering': 'recognizing_social_engineering_questions',
       'General Data Protection Regulation': 'gdpr_questions',
+      'Privacy, Safety and Security Issues': 'privacy_safety_and_security_questions',
     };
 
     final List<String> buttonTitles = tableNames.keys.toList();
@@ -25,7 +28,7 @@ class IntermediateModePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Intermediate Mode Quiz'),
-        backgroundColor: const Color(0xFF40C4FF),
+        backgroundColor: context.watch<ThemeProvider>().selectedBackgroundColor,
       ),
       body: Center(
         child: SizedBox(
@@ -39,8 +42,9 @@ class IntermediateModePage extends StatelessWidget {
                   padding: const EdgeInsets.all(7.0),
                   child: ElevatedButton(
                     onPressed: () {
+                      Navigator.of(context).popUntil((route) => route.isFirst);
                       String selectedTable = tableNames[title]!;
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => QuizPage(

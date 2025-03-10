@@ -1,14 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_page.dart';
 import 'package:fluttermoji/fluttermoji.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:open_file/open_file.dart';
+import 'theme_provider.dart';
 
-// CustomPainter to draw the curved progress bar
+// CustomPainter for the curved progress bar
 class CurvedProgressBarPainter extends CustomPainter {
-  final double progress; // Progress percentage
-  final double startAngle; // Starting angle of the arc
-  final double sweepAngle; // The sweep of the arc (in radians)
+  final double progress;
+  final double startAngle;
+  final double sweepAngle;
   final Color progressColor;
 
   CurvedProgressBarPainter({
@@ -20,45 +26,30 @@ class CurvedProgressBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()
+    Paint backgroundPaint = Paint()
       ..color = Colors.grey[300]!
-      ..strokeWidth = 20
+      ..strokeWidth = 12
       ..style = PaintingStyle.stroke;
 
-    // Draw the background circle for the arc
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(size.width / 2, size.height / 2), radius: size.width / 2),
-      startAngle,
-      sweepAngle,
-      false,
-      paint,
-    );
-
-    // Draw the filled arc for the progress
     Paint progressPaint = Paint()
       ..color = progressColor
-      ..strokeWidth = 20
+      ..strokeWidth = 12
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    // Sweep the arc based on progress (convert the percentage to radians)
-    double angle = (progress / 100) * sweepAngle;
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(size.width / 2, size.height / 2), radius: size.width / 2),
-      startAngle,
-      angle,
-      false,
-      progressPaint,
-    );
-  }
+    Rect rect = Rect.fromCircle(
+        center: Offset(size.width / 2, size.height / 2),
+        radius: size.width / 2);
 
-  bool shouldReclip(CustomPainter oldDelegate) {
-    return false;
+    canvas.drawArc(rect, startAngle, sweepAngle, false, backgroundPaint);
+    double angle = (progress / 100) * sweepAngle;
+    canvas.drawArc(rect, startAngle, angle, false, progressPaint);
   }
 
   @override
   bool shouldRepaint(CurvedProgressBarPainter oldDelegate) {
-    return false;
+    return oldDelegate.progress != progress ||
+        oldDelegate.progressColor != progressColor;
   }
 }
 
@@ -72,80 +63,227 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late Future<Map<String, dynamic>> userProgressFuture;
 
+  Color _backgroundColor = Colors.white;
+  String _selectedColorName = 'Light Blue';
+  bool _isTimerEnabled = false;
+
+
+  final Map<String, Color> availableColors = {
+    'White': Colors.white,
+    'Light Grey': Colors.grey.shade100,
+    'Beige': Color(0xFFFFF8E1),
+    'Light Blue': Color(0xFFE3F2FD),
+    'Mint Green': Color(0xFFE0F2F1),
+    'Light Blue Accent': Colors.lightBlueAccent,
+  };
+
   @override
   void initState() {
     super.initState();
     userProgressFuture = fetchUserProgress();
+    loadBackgroundColor();
+    loadTimerPreference();
   }
 
-  // Function to fetch user progress and username from the database
+  Future<void> loadBackgroundColor() async {
+    final prefs = await SharedPreferences.getInstance();
+    final colorName = prefs.getString('background_color') ?? 'Light Blue';
+
+    // Check if colorName exists in availableColors, else fallback to 'White'
+    final isValidColor = availableColors.containsKey(colorName);
+    final finalColorName = isValidColor ? colorName : 'White';
+
+    setState(() {
+      _selectedColorName = finalColorName;
+      _backgroundColor = availableColors[finalColorName]!;
+    });
+
+    if (!isValidColor) {
+      // Save the fallback color back to preferences
+      await prefs.setString('background_color', finalColorName);
+    }
+  }
+
+  Future<void> saveBackgroundColor(String colorName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('background_color', colorName);
+  }
+
   Future<Map<String, dynamic>> fetchUserProgress() async {
     final prefs = await SharedPreferences.getInstance();
     String? username = prefs.getString('username');
 
-    if (username == null) {
-      return {}; // If username is not found, return an empty map.
-    }
+    if (username == null) return {};
 
-    // Fetch user progress from Supabase
-    final response = await Supabase.instance.client
-        .from('users_data')
-        .select('username, safe_internet_usage_questions_beginner, safe_internet_usage_questions_intermediate, safe_internet_usage_questions_advanced')
-        .eq('username', username)
-        .single();
+    final response = await Supabase.instance.client.from('users_data').select('''
+      username,
+      safe_internet_usage_questions_beginner, safe_internet_usage_questions_intermediate, safe_internet_usage_questions_advanced,
+      cyber_hygiene_questions_beginner, cyber_hygiene_questions_intermediate, cyber_hygiene_questions_advanced,
+      social_cyber_attaches_questions_beginner, social_cyber_attaches_questions_intermediate, social_cyber_attaches_questions_advanced,
+      basic_email_security_questions_beginner, basic_email_security_questions_intermediate, basic_email_security_questions_advanced,
+      social_media_security_questions_beginner, social_media_security_questions_intermediate, social_media_security_questions_advanced,
+      recognizing_social_engineering_questions_beginner, recognizing_social_engineering_questions_intermediate, recognizing_social_engineering_questions_advanced,
+      gdpr_questions_beginner, gdpr_questions_intermediate, gdpr_questions_advanced,
+      privacy_safety_and_security_questions_beginner, privacy_safety_and_security_questions_intermediate, privacy_safety_and_security_questions_advanced,
+      iot_and_ai_in_cybersecurity_questions_beginner, iot_and_ai_in_cybersecurity_questions_intermediate, iot_and_ai_in_cybersecurity_questions_advanced
+    ''').eq('username', username).single();
+
+    return response;
+  }
+
+  double calculateProgress(Map<String, dynamic> data) {
+    int completed = 0;
+    int total = 0;
+
+    data.forEach((key, value) {
+      if (key == 'username') return;
+      total++;
+      if (value == true) completed++;
+    });
+
+    return (completed / total) * 100;
+  }
+
+  Map<String, double> calculateModeProgress(Map<String, dynamic> data) {
+    Map<String, int> total = {'beginner': 0, 'intermediate': 0, 'advanced': 0};
+    Map<String, int> completed = {'beginner': 0, 'intermediate': 0, 'advanced': 0};
+
+    data.forEach((key, value) {
+      if (key == 'username') return;
+
+      if (key.endsWith('_beginner')) {
+        total['beginner'] = total['beginner']! + 1;
+        if (value == true) completed['beginner'] = completed['beginner']! + 1;
+      } else if (key.endsWith('_intermediate')) {
+        total['intermediate'] = total['intermediate']! + 1;
+        if (value == true) completed['intermediate'] = completed['intermediate']! + 1;
+      } else if (key.endsWith('_advanced')) {
+        total['advanced'] = total['advanced']! + 1;
+        if (value == true) completed['advanced'] = completed['advanced']! + 1;
+      }
+    });
 
     return {
-      "username": response['username'],
-      "beginner": response['safe_internet_usage_questions_beginner'] ?? false,
-      "intermediate": response['safe_internet_usage_questions_intermediate'] ?? false,
-      "advanced": response['safe_internet_usage_questions_advanced'] ?? false,
+      'Beginner': (completed['beginner']! / total['beginner']!) * 100,
+      'Intermediate': (completed['intermediate']! / total['intermediate']!) * 100,
+      'Advanced': (completed['advanced']! / total['advanced']!) * 100,
     };
   }
 
-  // Function to determine progress color dynamically
   Color getProgressColor(double progress) {
     if (progress < 50) {
-      return Color.lerp(Colors.yellow, Colors.orange, progress / 50)!;
+      return Color.lerp(Colors.yellow, Color(0xFFF1B05B), progress / 50)!;
     } else if (progress < 100) {
-      return Color.lerp(Colors.orange, Colors.green, (progress - 50) / 50)!;
+      return Color.lerp(Colors.orange, Colors.deepOrangeAccent, (progress - 50) / 50)!;
     } else {
-      return Colors.green; // Fully completed
+      return Colors.green;
     }
   }
 
-  // Build the progress bar with curved design and color change based on percentage
-  Widget buildProgressBar(double progress) {
+  Future<void> loadTimerPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isTimerEnabled = prefs.getBool('quiz_timer_enabled') ?? false;
+    });
+  }
+
+  Future<void> saveTimerPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('quiz_timer_enabled', value);
+  }
+
+
+  Widget buildProgressBar(double progress,
+      {String label = "Overall\nProgress", double size = 100}) {
     Color progressColor = getProgressColor(progress);
 
     return Stack(
       alignment: Alignment.center,
       children: [
-        Positioned(
-          child: Container(
-            width: 80,
-            height: 80,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'SFU',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        Container(
+          width: size,
+          height: size,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+          ),
+          alignment: Alignment.center,
+          child: Center(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
         ),
         CustomPaint(
-          size: const Size(100, 100),
+          size: Size(size, size),
           painter: CurvedProgressBarPainter(
             progress: progress,
-            startAngle: -3.14 / 2, // Start from the top
-            sweepAngle: 6.28, // Full circular arc
+            startAngle: -3.14 / 2,
+            sweepAngle: 6.28,
             progressColor: progressColor,
           ),
         ),
       ],
     );
+  }
+
+  bool isAdvancedCompleted(Map<String, dynamic> progress) {
+    final advancedQuizzes = [
+      'safe_internet_usage_questions_advanced',
+      'cyber_hygiene_questions_advanced',
+      'social_cyber_attaches_questions_advanced',
+      'basic_email_security_questions_advanced',
+      'social_media_security_questions_advanced',
+      'recognizing_social_engineering_questions_advanced',
+      'gdpr_questions_advanced',
+      'privacy_safety_and_security_questions_advanced',
+      'iot_and_ai_in_cybersecurity_questions_advanced'
+    ];
+
+    for (var quiz in advancedQuizzes) {
+      if (progress[quiz] != true) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  Future<void> generateCertificate(String username, Map<String, dynamic> progress) async {
+    if (!isAdvancedCompleted(progress)) return;
+
+    final pdf = pw.Document();
+    final progressPercentage = calculateProgress(progress);
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Center(
+            child: pw.Column(
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              children: [
+                pw.Text('Certificate of Achievement', style: pw.TextStyle(fontSize: 30, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 20),
+                pw.Text('This is to certify that', style: pw.TextStyle(fontSize: 20)),
+                pw.SizedBox(height: 10),
+                pw.Text(username, style: pw.TextStyle(fontSize: 25, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 20),
+                pw.Text('has successfully completed all advanced quizzes of NetSecured with a progress of $progressPercentage%', style: pw.TextStyle(fontSize: 20)),
+                pw.SizedBox(height: 50),
+                pw.Text('Date: ${DateTime.now().toLocal()}', style: pw.TextStyle(fontSize: 18)),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    final output = await getTemporaryDirectory();
+    final file = File('${output.path}/certificate_$username.pdf');
+    await file.writeAsBytes(await pdf.save());
+    await OpenFile.open(file.path);
   }
 
   @override
@@ -163,62 +301,152 @@ class _ProfilePageState extends State<ProfilePage> {
           }
 
           Map<String, dynamic> progress = snapshot.data ?? {};
-
           String username = progress["username"] ?? "Unknown";
-          bool beginnerPassed = progress["beginner"] ?? false;
-          bool intermediatePassed = progress["intermediate"] ?? false;
-          bool advancedPassed = progress["advanced"] ?? false;
+          double progressPercentage = calculateProgress(progress);
 
-          // Calculate overall progress percentage
-          double progressPercentage = 0;
-          if (beginnerPassed) progressPercentage += 33.33;
-          if (intermediatePassed) progressPercentage += 33.33;
-          if (advancedPassed) progressPercentage += 33.34;
+          final quizMap = <String, Map<String, bool>>{};
+          progress.forEach((key, value) {
+            if (key == 'username') return;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Profile Header
-                Row(
+            final quizPrefix = key.replaceAll(RegExp(r'_(beginner|intermediate|advanced)$'), '');
+            final level = key.split('_').last;
+
+            quizMap[quizPrefix] ??= {};
+            quizMap[quizPrefix]![level] = value == true;
+          });
+
+          return Container(
+              color: context.watch<ThemeProvider>().availableColors[
+              context.watch<ThemeProvider>().selectedColorName
+              ],
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Icon(Icons.person, size: 30, color: Colors.black),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () {
-                        Supabase.instance.client.auth.signOut();
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const HomePage()),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        const Icon(Icons.person, size: 30, color: Colors.black),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () async {
+                            await Supabase.instance.client.auth.signOut();
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.remove('username');
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const HomePage()),
+                            );
+                          },
+                          child: const Icon(Icons.logout, size: 30, color: Colors.black),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    FluttermojiCircleAvatar(radius: 100),
+                    const SizedBox(height: 20),
+
+                    Text('Username: $username', style: const TextStyle(fontSize: 20)),
+                    const SizedBox(height: 20),
+
+                    const Text("Overall Progress", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                    buildProgressBar(progressPercentage, size: 120),
+
+                    const SizedBox(height: 30),
+                    const Text("Mode Progress", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                    Wrap(
+                      spacing: 24,
+                      runSpacing: 24,
+                      alignment: WrapAlignment.center,
+                      children: calculateModeProgress(progress).entries.map((entry) {
+                        return buildProgressBar(entry.value, label: entry.key, size: 100);
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 30),
+                    const Text("Category Progress", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+
+                    Wrap(
+                      spacing: 24,
+                      runSpacing: 24,
+                      alignment: WrapAlignment.center,
+                      children: quizMap.entries.map((entry) {
+                        String quizTitle = entry.key.replaceAll('_questions', '').split('_').map((word) {
+                          return word == 'gdpr' ? 'GDPR' : word[0].toUpperCase() + word.substring(1);
+                        }).join(' ');
+
+                        Map<String, bool> levels = entry.value;
+                        int total = levels.length;
+                        int completed = levels.values.where((done) => done).length;
+                        double categoryProgress = (completed / total) * 100;
+
+                        return buildProgressBar(categoryProgress, label: quizTitle, size: 100);
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 30),
+                    const Text("Quiz Timer", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    SwitchListTile(
+                      title: const Text("Enable Timer for Quizzes"),
+                      value: _isTimerEnabled,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _isTimerEnabled = value;
+                        });
+                        saveTimerPreference(value);
+                      },
+                    ),
+
+
+                    const SizedBox(height: 30),
+                    const Text("Customize Background", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    DropdownButton<String>(
+                      value: context.watch<ThemeProvider>().selectedColorName,
+                      items: context.watch<ThemeProvider>().availableColors.keys.map((String colorName) {
+                        return DropdownMenuItem<String>(
+                          value: colorName,
+                          child: Text(colorName),
+                        );
+                      }).toList(),
+                      onChanged: (String? colorName) {
+                        if (colorName != null) {
+                          context.read<ThemeProvider>().setBackgroundColor(colorName);
+                          setState(() {});
+                        }
+                      },
+                    ),
+
+
+                    const SizedBox(height: 30),
+                    const Text("Certificate", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (!isAdvancedCompleted(progress)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('You must complete all advanced quizzes to download the certificate.')),
+                          );
+                          return;
+                        }
+
+                        await generateCertificate(username, progress);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Certificate generated successfully!')),
                         );
                       },
-                      child: const Icon(Icons.logout, size: 30, color: Colors.black),
+                      child: const Text('Download Certificate'),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-
-                FluttermojiCircleAvatar(radius: 100),
-
-                const SizedBox(height: 20),
-
-                // Username
-                Text(
-                  'Username: $username',
-                  style: const TextStyle(fontSize: 20),
-                ),
-                const SizedBox(height: 20),
-
-                // Badge Section Title
-                const Text("Badges", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-
-                const SizedBox(height: 20),
-
-                // Display Progress Bar with image in the center
-                buildProgressBar(progressPercentage),
-              ],
+              ),
             ),
           );
         },

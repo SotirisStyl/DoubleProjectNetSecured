@@ -1,19 +1,29 @@
-import 'package:cs_app2/app_main_page.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'home_page.dart';
-import 'package:fluttermoji/fluttermoji.dart';
 import 'package:get/get.dart';
+import 'package:fluttermoji/fluttermoji.dart';
+import 'theme_provider.dart';
+import 'home_page.dart';
+import 'app_main_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Supabase.initialize(
     url: 'https://wqmtemavpxxmanimglrz.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxbXRlbWF2cHh4bWFuaW1nbHJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUxMzcxODgsImV4cCI6MjA1MDcxMzE4OH0.dnKQTpoJr4OYSzOn29ll3PfSdCyiEnpWRc_3i5dZGfA',
     debug: false,
   );
+
   Get.put(FluttermojiController());
-  runApp(const MyApp());
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 final supabase = Supabase.instance.client;
@@ -23,14 +33,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.lightBlueAccent,
-      ),
-      home: const RedirectPage(),
-      debugShowCheckedModeBanner: false,
+
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            scaffoldBackgroundColor: themeProvider.backgroundColor,
+          ),
+          home: const RedirectPage(),
+          debugShowCheckedModeBanner: false,
+        );
+      }
     );
   }
 }
@@ -49,14 +64,11 @@ class RedirectPage extends StatelessWidget {
       future: _isUserLoggedIn(),
       builder: (context, snapshot) {
         if (snapshot.hasData && snapshot.data == true) {
-          // If the user is logged in, show the LeaderboardPage
           return const QuizMainPage();
         } else {
-          // If the user is not logged in, show the HomePage
           return const HomePage();
         }
       },
     );
   }
 }
-

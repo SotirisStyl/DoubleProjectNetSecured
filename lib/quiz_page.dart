@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,11 +22,24 @@ class _QuizPageState extends State<QuizPage> {
   bool isLoading = true;
   int points = 0; // Local points counter
 
+  // Timer-related state
+  bool _isTimerEnabled = false;
+  int _remainingTime = 300; // 5 minutes in seconds
+  Timer? _quizTimer;
+  bool _timeExpired = false;
+
   @override
   void initState() {
     super.initState();
     _resetPoints(); // Reset points at the start of the quiz
     fetchQuestions();
+    _loadTimerPreference();
+  }
+
+  @override
+  void dispose() {
+    _quizTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _resetPoints() async {
@@ -104,6 +120,13 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _checkAnswer(String selectedAnswer) {
+    // If the timer is enabled and has expired, do nothing (or show a quick message)
+    if (_isTimerEnabled && _timeExpired) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Time is up!")));
+      return;
+    }
+
     Map<String, dynamic> question = questions[currentIndex];
 
     if (selectedAnswer == question['correct_answer']) {
@@ -117,6 +140,8 @@ class _QuizPageState extends State<QuizPage> {
         currentIndex++;
       });
     } else {
+      // If timer is still running, cancel it on quiz completion
+      _quizTimer?.cancel();
       _showQuizCompletedDialog();
     }
   }
@@ -125,7 +150,29 @@ class _QuizPageState extends State<QuizPage> {
     final prefs = await SharedPreferences.getInstance();
     int finalScore = prefs.getInt('points') ?? 0;
 
-    // Check if quiz progress should be updated
+    // If time expired (even if the user finished the last question), show a time expired message
+    if (_isTimerEnabled && _timeExpired) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Time Expired"),
+          content: const Text(
+              "You did not complete the quiz within 5 minutes. No points were awarded."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context); // Exit quiz page
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Update quiz progress if applicable (only if quiz is completed within time or timer is off)
     if (widget.difficulty == "beginner" && finalScore >= 35) {
       await _updateQuizProgress(widget.tableName, widget.difficulty);
     } else if (widget.difficulty == "intermediate" && finalScore >= 70) {
@@ -178,6 +225,62 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
+  Future<void> _loadTimerPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool timerEnabled = prefs.getBool('quiz_timer_enabled') ?? false;
+    setState(() {
+      _isTimerEnabled = timerEnabled;
+    });
+    if (timerEnabled) {
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    _quizTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingTime > 0) {
+        setState(() {
+          _remainingTime--;
+        });
+      } else {
+        setState(() {
+          _timeExpired = true;
+        });
+        _quizTimer?.cancel();
+        _quizTimer = null;
+        _showTimeExpiredDialog();
+      }
+    });
+  }
+
+  void _showTimeExpiredDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Force the user to acknowledge
+      builder: (context) => AlertDialog(
+        title: const Text("Time Expired"),
+        content: const Text(
+            "You did not complete the quiz within 5 minutes. No points were awarded."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Exit quiz page
+            },
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper function to format time (mm:ss)
+  String formatDuration(int seconds) {
+    int minutes = seconds ~/ 60;
+    int secs = seconds % 60;
+    return "${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}";
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -202,13 +305,20 @@ class _QuizPageState extends State<QuizPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Display timer if enabled
+              if (_isTimerEnabled) ...[
+                Text(
+                  "Time Remaining: ${formatDuration(_remainingTime)}",
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+              ],
               Text(
                 question['question_text'],
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-
               if (question['question_type'] == 'multiple choice') ...[
                 buildAnswerButton(question['answer_a']),
                 buildAnswerButton(question['answer_b']),
@@ -218,9 +328,9 @@ class _QuizPageState extends State<QuizPage> {
                 buildAnswerButton('Yes'),
                 buildAnswerButton('No'),
               ],
-
               const SizedBox(height: 20),
-              Text("Points: $points", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text("Points: $points",
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
         ),

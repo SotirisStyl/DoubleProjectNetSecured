@@ -26,11 +26,10 @@ class _QuizMainPageState extends State<QuizMainPage> {
   @override
   void initState() {
     super.initState();
-    _leaderboardFuture = _fetchLeaderboard(); // Fetch leaderboard once
-    _userPointsFuture = _fetchUserPoints(); // Fetch user's points once
+    _leaderboardFuture = _fetchLeaderboard();
+    _userPointsFuture = _fetchUserPoints();
   }
 
-  // Fetch the leaderboard data from Supabase
   Future<List<Map<String, dynamic>>> _fetchLeaderboard() async {
     final supabase = Supabase.instance.client;
     final response = await supabase
@@ -41,28 +40,28 @@ class _QuizMainPageState extends State<QuizMainPage> {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  // Fetch the user's points from Supabase based on their username
   Future<int> _fetchUserPoints() async {
     final supabase = Supabase.instance.client;
     final prefs = await SharedPreferences.getInstance();
     final username = prefs.getString('username') ?? '';
-    final response = await supabase
-        .from('users_data')
-        .select('user_points')
-        .eq('username', username)
-        .single();
+    if (username.isEmpty) return 0;
 
-    if (response != null) {
-      return response['user_points'] ?? 0;  // Return the user's points or 0 if no data
-    } else {
-      return 0;  // Return 0 if no data found
+    try {
+      final response = await supabase
+          .from('users_data')
+          .select('user_points')
+          .eq('username', username)
+          .single();
+
+      return response['user_points'] ?? 0;
+    } catch (e) {
+      return 0;
     }
   }
 
-  // Refresh leaderboard data
   void _refreshLeaderboard() {
     setState(() {
-      _leaderboardFuture = _fetchLeaderboard(); // Refresh data
+      _leaderboardFuture = _fetchLeaderboard();
     });
   }
 
@@ -116,20 +115,26 @@ class _QuizHomePageState extends State<QuizHomePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _userPointsFuture = _fetchUserPoints(); // Refresh points every time user enters
+    _userPointsFuture = _fetchUserPoints();
   }
 
   Future<int> _fetchUserPoints() async {
     final supabase = Supabase.instance.client;
     final prefs = await SharedPreferences.getInstance();
     final username = prefs.getString('username') ?? '';
-    final response = await supabase
-        .from('users_data')
-        .select('user_points')
-        .eq('username', username)
-        .single();
+    if (username.isEmpty) return 0;
 
-    return response != null ? response['user_points'] ?? 0 : 0;
+    try {
+      final response = await supabase
+          .from('users_data')
+          .select('user_points')
+          .eq('username', username)
+          .single();
+      setState(() {});
+      return response['user_points'] ?? 0;
+    } catch (e) {
+      return 0;
+    }
   }
 
   Widget _buildModeButton(String text, Color color, bool isUnlocked, VoidCallback? onPressed) {
@@ -139,9 +144,10 @@ class _QuizHomePageState extends State<QuizHomePage> {
         TextButton(
           style: ButtonStyle(
             backgroundColor: WidgetStateProperty.all(isUnlocked ? color : Colors.black),
+            padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 15, vertical: 15)),
           ),
           onPressed: onPressed,
-          child: Text(text, style: TextStyle(color: Colors.white)),
+          child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 16)),
         ),
         if (!isUnlocked)
           Positioned(
@@ -171,7 +177,7 @@ class _QuizHomePageState extends State<QuizHomePage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => InfoPage()),
+                          MaterialPageRoute(builder: (context) => const InfoPage()),
                         );
                       },
                       child: const Icon(Icons.info_outline, size: 30, color: Colors.black),
@@ -191,7 +197,9 @@ class _QuizHomePageState extends State<QuizHomePage> {
                             () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => BeginnerModePage(difficulty: 'beginner')),
+                            MaterialPageRoute(
+                              builder: (context) => BeginnerModePage(difficulty: 'beginner'),
+                            ),
                           );
                         },
                       ),
@@ -203,12 +211,8 @@ class _QuizHomePageState extends State<QuizHomePage> {
                             return const CircularProgressIndicator();
                           }
 
-                          if (snapshot.hasError) {
-                            return const Text('Error fetching user points');
-                          }
-
                           int userPoints = snapshot.data ?? 0;
-                          bool isUnlocked = userPoints >= 100;
+                          bool isUnlocked = userPoints >= 200;
 
                           return _buildModeButton(
                             'Intermediate Mode',
@@ -219,7 +223,8 @@ class _QuizHomePageState extends State<QuizHomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => IntermediateModePage(difficulty: 'intermediate')),
+                                  builder: (context) => IntermediateModePage(difficulty: 'intermediate'),
+                                ),
                               );
                             }
                                 : null,
@@ -234,12 +239,8 @@ class _QuizHomePageState extends State<QuizHomePage> {
                             return const CircularProgressIndicator();
                           }
 
-                          if (snapshot.hasError) {
-                            return const Text('Error fetching user points');
-                          }
-
                           int userPoints = snapshot.data ?? 0;
-                          bool isUnlocked = userPoints >= 200;
+                          bool isUnlocked = userPoints >= 500;
 
                           return _buildModeButton(
                             'Advanced Mode',
@@ -250,7 +251,8 @@ class _QuizHomePageState extends State<QuizHomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => AdvancedModePage(difficulty: 'advanced')),
+                                  builder: (context) => AdvancedModePage(difficulty: 'advanced'),
+                                ),
                               );
                             }
                                 : null,

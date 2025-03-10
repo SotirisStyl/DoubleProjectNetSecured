@@ -77,20 +77,38 @@ class HomePage extends StatelessWidget {
               margin: const EdgeInsets.only(top: 10),
               child: TextButton(
                 style: ButtonStyle(
-                    backgroundColor:
-                        WidgetStateProperty.all(const Color(0xff6200EE))),
+                    backgroundColor: WidgetStateProperty.all(const Color(0xff6200EE))),
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const QuizMainPage()),
+                  // Show the dialog
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Guest Account'),
+                        content: const Text(
+                            'You are currently using a guest account. Features will be limited.'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              // Close the dialog
+                              Navigator.of(context).pop();
+
+                              // Navigate to the QuizMainPage
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => const QuizMainPage()),
+                              );
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
-                child: const Text('Continue As Guest',
-                    style: TextStyle(color: Colors.white)),
+                child: const Text('Continue As Guest', style: TextStyle(color: Colors.white)),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.only(top: 10.0),
               child: Text("------------------------------ OR CONTINUE WITH -------------------------------"),
