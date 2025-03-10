@@ -254,9 +254,35 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> generateCertificate(String username, Map<String, dynamic> progress) async {
     if (!isAdvancedCompleted(progress)) return;
 
-    final pdf = pw.Document();
-    final progressPercentage = calculateProgress(progress);
+    TextEditingController nameController = TextEditingController(text: username);
+    String? enteredName = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Enter Name for Certificate'),
+          content: TextField(
+            controller: nameController,
+            decoration: InputDecoration(hintText: "Enter your name"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(nameController.text),
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
 
+    if (enteredName == null || enteredName.isEmpty) return;
+
+    double advancedProgress = calculateModeProgress(progress)['Advanced'] ?? 0;
+
+    final pdf = pw.Document();
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) {
@@ -268,9 +294,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 pw.SizedBox(height: 20),
                 pw.Text('This is to certify that', style: pw.TextStyle(fontSize: 20)),
                 pw.SizedBox(height: 10),
-                pw.Text(username, style: pw.TextStyle(fontSize: 25, fontWeight: pw.FontWeight.bold)),
+                pw.Text(enteredName, style: pw.TextStyle(fontSize: 25, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 20),
-                pw.Text('has successfully completed all advanced quizzes of NetSecured with a progress of $progressPercentage%', style: pw.TextStyle(fontSize: 20)),
+                pw.Text('has successfully completed the advanced level of NetSecured with a score of $advancedProgress%', style: pw.TextStyle(fontSize: 20)),
                 pw.SizedBox(height: 50),
                 pw.Text('Date: ${DateTime.now().toLocal()}', style: pw.TextStyle(fontSize: 18)),
               ],
@@ -285,6 +311,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await file.writeAsBytes(await pdf.save());
     await OpenFile.open(file.path);
   }
+
 
   @override
   Widget build(BuildContext context) {

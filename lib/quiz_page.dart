@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:cs_app2/app_main_page.dart';
 
 class QuizPage extends StatefulWidget {
   final String tableName;
@@ -161,8 +162,10 @@ class _QuizPageState extends State<QuizPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context); // Exit quiz page
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => QuizMainPage()),
+                ); // Exit quiz page
               },
               child: const Text("OK"),
             ),
@@ -192,8 +195,10 @@ class _QuizPageState extends State<QuizPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Exit quiz page
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => QuizMainPage()),
+              );
             },
             child: const Text("OK"),
           ),
@@ -264,8 +269,10 @@ class _QuizPageState extends State<QuizPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Exit quiz page
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => QuizMainPage()),
+              );// Exit quiz page
             },
             child: const Text("OK"),
           ),

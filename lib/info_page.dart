@@ -60,12 +60,30 @@ class InfoPage extends StatelessWidget {
             Text("• Score 200 points in Beginner mode to unlock Intermediate mode."),
             Text("• Score 500 points in Beginner or Intermediate to unlock Advanced mode.\n"),
             Text(
+              "Progress Tracker",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text("• There is an overall progress bar in order to track your overall progress."),
+            Text("• Also, there is a progress bar for each mode, to track your progress in each mode.\n"),
+            Text(
               "Badges",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text("• Earn badges by completing quizzes with over 70% correct answers."),
             Text("• Each quiz has a badge that changes color once completed."),
             Text("• Complete all three quizzes in a category to turn the badge green.\n"),
+            Text(
+              "Quiz Timer",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text("• There is a feature that when enabled, the timer will start a timer for 5 minutes when you start the quiz."),
+            Text("• If the timer runs out, the quiz will end and you will not be able to submit your answers, causing you to lose the points gained from the quiz.\n"),
+            Text(
+              "Customize Background",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text("• There is a feature that allows you to customize the background of the app."),
+            Text("• You can choose from a variety of colors to customize the background of the app.\n"),
             Text(
               "Certificate",
               style: TextStyle(fontWeight: FontWeight.bold),
