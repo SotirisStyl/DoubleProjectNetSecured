@@ -3,134 +3,125 @@ import 'package:flutter/material.dart';
 import 'package:cs_app2/sign_up.dart';
 import 'package:cs_app2/sign_in.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-//build main page for sign in and sign up and guest mode
+// Main Home Page for sign in / sign up / guest
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  Future<void> signInWithGoogle(BuildContext context) async {
+    try {
+      await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'https://wqmtemavpxxmanimglrz.supabase.co/auth/v1/callback',
+      );
+
+      // The user will be redirected externally, so this part won’t be called immediately.
+    } catch (e) {
+      print('Google Sign-In Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to sign in with Google')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Column(
-      children: [
-        Padding(padding: const EdgeInsets.only(top: 30)),
-        Center(
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Image.asset(
-              'assets/AppImage.png',
-              fit: BoxFit.cover,
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height * 0.38,
-            ),
-            Image.asset(
-              'assets/Lines.png',
-              fit: BoxFit.cover,
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height * 0.14,
-            ),
-            Container(
-              margin: const EdgeInsets.only(top: 10),
-              child: const Text(
-                'WELCOME!',
-                style: TextStyle(fontSize: 30),
-              ),
-            ),
-            Container(
-              width: 150,
-              height: 40,
-              margin: const EdgeInsets.only(top: 10),
-              child: TextButton(
-                style: ButtonStyle(
-                    backgroundColor:
-                        WidgetStateProperty.all(const Color(0xff6200EE))),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SignUpPage()),
-                  );
-                },
-                child: const Text('Create Account',
-                    style: TextStyle(color: Colors.white)),
-              ),
-            ),
-            Container(
-              width: 150,
-              height: 40,
-              margin: const EdgeInsets.only(top: 10),
-              child: TextButton(
-                style: ButtonStyle(
-                    backgroundColor:
-                        WidgetStateProperty.all(const Color(0xff6200EE))),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                  );
-                },
-                child: const Text('Sign In',
-                    style: TextStyle(color: Colors.white)),
-              ),
-            ),
-            Container(
-              width: 150,
-              height: 40,
-              margin: const EdgeInsets.only(top: 10),
-              child: TextButton(
-                style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(const Color(0xff6200EE))),
-                onPressed: () {
-                  // Show the dialog
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('Guest Account'),
-                        content: const Text(
-                            'You are currently using a guest account. Features will be limited.'),
-                        actions: <Widget>[
-                          TextButton(
-                            onPressed: () {
-                              // Close the dialog
-                              Navigator.of(context).pop();
-
-                              // Navigate to the QuizMainPage
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const QuizMainPage()),
-                              );
-                            },
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                child: const Text('Continue As Guest', style: TextStyle(color: Colors.white)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 10.0),
-              child: Text("------------------------------ OR CONTINUE WITH -------------------------------"),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center, // Center the icons horizontally
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    FontAwesomeIcons.google,
-                    size: 35,
+      body: SingleChildScrollView( // To handle overflow on smaller screens
+        child: Column(
+          children: [
+            const SizedBox(height: 30),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/AppImage.png',
+                    fit: BoxFit.cover,
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height * 0.38,
                   ),
-                  onPressed: () {
-                    print('Google clicked');
-                  },
-                  splashRadius: 25, // Adjust splash radius for animation
-                ),
-              ],
+                  Image.asset(
+                    'assets/Lines.png',
+                    fit: BoxFit.cover,
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height * 0.14,
+                  ),
+                  const Text(
+                    'WELCOME!',
+                    style: TextStyle(fontSize: 30),
+                  ),
+                  buildButton(context, 'Create Account', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SignUpPage()),
+                    );
+                  }),
+                  buildButton(context, 'Sign In', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    );
+                  }),
+                  buildButton(context, 'Continue As Guest', () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Guest Account'),
+                          content: const Text(
+                              'You are currently using a guest account. Features will be limited.'),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const QuizMainPage()),
+                                );
+                              },
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10.0),
+                    child: Text(
+                      "---------------- OR CONTINUE WITH ----------------",
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(FontAwesomeIcons.google, size: 35),
+                    onPressed: () => signInWithGoogle(context),
+                    splashRadius: 25,
+                  ),
+                ],
+              ),
             ),
-          ]),
+          ],
         ),
-      ],
-    ));
+      ),
+    );
+  }
+
+  Widget buildButton(BuildContext context, String text, VoidCallback onPressed) {
+    return Container(
+      width: 180,
+      height: 45,
+      margin: const EdgeInsets.only(top: 10),
+      child: TextButton(
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all(const Color(0xff6200EE)),
+        ),
+        onPressed: onPressed,
+        child: Text(text, style: const TextStyle(color: Colors.white)),
+      ),
+    );
   }
 }

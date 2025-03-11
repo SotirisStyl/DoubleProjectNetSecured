@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -162,6 +161,7 @@ class _QuizPageState extends State<QuizPage> {
           actions: [
             TextButton(
               onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => QuizMainPage()),
@@ -195,6 +195,7 @@ class _QuizPageState extends State<QuizPage> {
         actions: [
           TextButton(
             onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => QuizMainPage()),
@@ -269,6 +270,7 @@ class _QuizPageState extends State<QuizPage> {
         actions: [
           TextButton(
             onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => QuizMainPage()),
@@ -290,11 +292,6 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
 
     if (questions.isEmpty) {
       return Scaffold(

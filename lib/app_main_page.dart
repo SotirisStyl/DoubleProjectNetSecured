@@ -207,9 +207,6 @@ class _QuizHomePageState extends State<QuizHomePage> {
                       FutureBuilder<int>(
                         future: _userPointsFuture,
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          }
 
                           int userPoints = snapshot.data ?? 0;
                           bool isUnlocked = userPoints >= 200;

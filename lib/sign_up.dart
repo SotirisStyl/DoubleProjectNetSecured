@@ -141,12 +141,6 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
             const SizedBox(height: 10),
-            isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: signUp,
-                    child: const Text('Register'),
-                  ),
           ],
         ),
       ),
