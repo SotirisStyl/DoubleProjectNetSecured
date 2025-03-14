@@ -75,7 +75,6 @@ class _SignUpPageState extends State<SignUpPage> {
     } catch (e) {
       // Catch any unexpected errors
       _showMessage('An error occurred. Please try again.');
-      print(e);
     } finally {
       setState(() {
         isLoading = false;
@@ -95,7 +94,7 @@ class _SignUpPageState extends State<SignUpPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-        Padding(padding: const EdgeInsets.only(top: 30)),
+            Padding(padding: const EdgeInsets.only(top: 30)),
             Image.asset(
               'assets/AppImage.png',
               fit: BoxFit.cover,
@@ -141,6 +140,12 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
             const SizedBox(height: 10),
+            isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+              onPressed: signUp,
+              child: const Text('Register'),
+            ),
           ],
         ),
       ),

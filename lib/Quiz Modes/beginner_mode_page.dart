@@ -1,28 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:cs_app2/introduction_page.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Import the package for icons
 
 import '../theme_provider.dart';
 
-class BeginnerModePage extends StatelessWidget {
+class BeginnerModePage extends StatefulWidget {
   final String difficulty;
 
   const BeginnerModePage({super.key, required this.difficulty});
 
   @override
-  Widget build(BuildContext context) {
-    final Map<String, String> tableNames = {
-      'Cyber Hygiene': 'cyber_hygiene_questions',
-      'Safe Internet Usage': 'safe_internet_usage_questions',
-      'Social Cyber Attaches': 'social_cyber_attaches_questions',
-      'Basic Email Security': 'basic_email_security_questions',
-      'Social Media Security': 'social_media_security_questions',
-      'IOT and Ai in Cybersecurity': 'iot_and_ai_in_cybersecurity_questions',
-      'Recognizing Social Engineering': 'recognizing_social_engineering_questions',
-      'General Data Protection Regulation': 'gdpr_questions',
-      'Privacy, Safety and Security Issues': 'privacy_safety_and_security_questions',
-    };
+  State<BeginnerModePage> createState() => _BeginnerModePageState();
+}
 
+class _BeginnerModePageState extends State<BeginnerModePage> {
+  final SupabaseClient supabase = Supabase.instance.client;
+  Map<String, bool> quizProgress = {};
+  bool isLoading = true;
+
+  final Map<String, String> tableNames = {
+    'Safe Internet Usage': 'safe_internet_usage_questions',
+    'Cyber Hygiene': 'cyber_hygiene_questions',
+    'Social Cyber Attaches': 'social_cyber_attaches_questions',
+    'Basic Email Security': 'basic_email_security_questions',
+    'Social Media Security': 'social_media_security_questions',
+    'Recognizing Social Engineering': 'recognizing_social_engineering_questions',
+    'General Data Protection Regulation': 'gdpr_questions',
+    'Privacy, Safety, and Security Issues': 'privacy_safety_and_security_questions',
+    'IoT and Ai in Cybersecurity': 'iot_and_ai_in_cybersecurity_questions',
+  };
+
+  final Map<String, IconData> categoryIcons = {
+    'Cyber Hygiene': FontAwesomeIcons.shieldAlt,
+    'Safe Internet Usage': FontAwesomeIcons.networkWired,
+    'Social Cyber Attaches': FontAwesomeIcons.usersSlash,
+    'Basic Email Security': FontAwesomeIcons.envelopeOpenText,
+    'Social Media Security': FontAwesomeIcons.facebookF,
+    'IoT and Ai in Cybersecurity': FontAwesomeIcons.robot,
+    'Recognizing Social Engineering': FontAwesomeIcons.lock,
+    'General Data Protection Regulation': FontAwesomeIcons.gavel,
+    'Privacy, Safety, and Security Issues': FontAwesomeIcons.eyeSlash,
+  };
+
+  String? username;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUsername();
+  }
+
+  Future<void> fetchUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? storedUsername = prefs.getString('username');
+
+    setState(() {
+      username = storedUsername;
+    });
+
+    if (username != null) {
+      fetchQuizProgress();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchQuizProgress() async {
+    if (username == null) return;
+
+    try {
+      final response = await supabase
+          .from('users_data')
+          .select()
+          .eq('username', username as Object)
+          .single();
+
+      final Map<String, dynamic> data = response;
+
+      final Map<String, bool> progress = {};
+      for (var entry in tableNames.entries) {
+        String key = "${entry.value}_${widget.difficulty}".toLowerCase();
+        progress[key] = data[key] == true;
+      }
+
+      setState(() {
+        quizProgress = progress;
+        isLoading = false;
+      });
+    } catch (error) {
+      print("Error fetching progress: $error");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final List<String> buttonTitles = tableNames.keys.toList();
 
     return Scaffold(
@@ -30,40 +109,59 @@ class BeginnerModePage extends StatelessWidget {
         title: const Text('Beginner Mode Quiz'),
         backgroundColor: context.watch<ThemeProvider>().selectedBackgroundColor,
       ),
-      body: Center(
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height, // Prevent scrolling
-          child: SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: buttonTitles.map((title) {
-                return Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      String selectedTable = tableNames[title]!;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => IntroductionPage(
-                            topic: title,
-                            tableName: selectedTable,
-                            difficulty: difficulty,
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff6200EE),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(title),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: ListView.builder(
+          itemCount: buttonTitles.length,
+          itemBuilder: (context, index) {
+            String title = buttonTitles[index];
+            String baseTable = tableNames[title]!;
+            String tableKey = "${baseTable}_${widget.difficulty}".toLowerCase();
+            bool isCompleted = quizProgress[tableKey] ?? false;
+
+            return Card(
+              elevation: 5.0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                tileColor: isCompleted ? Colors.green : Color(0xff6200EE),
+                textColor: Colors.white,
+                leading: Icon(
+                  categoryIcons[title], // Icon for each category
+                  size: 40.0,
+                  color: Colors.white,
+                ),
+                title: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              }).toList(),
-            ),
-          ),
+                ),
+                trailing: isCompleted
+                    ? const Icon(Icons.check_circle, color: Colors.white)
+                    : null,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => IntroductionPage(
+                        topic: title,
+                        tableName: baseTable,
+                        difficulty: widget.difficulty,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         ),
       ),
     );

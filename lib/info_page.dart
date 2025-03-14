@@ -1,6 +1,5 @@
-import 'package:cs_app2/theme_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+
 
 class InfoPage extends StatelessWidget {
   const InfoPage({super.key});
@@ -8,21 +7,12 @@ class InfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: context.watch<ThemeProvider>().selectedBackgroundColor,
-        title: Row(
-          children: const [
-            Text("Information"),
-            Spacer(), // pushes the icon to the far right
-            Icon(Icons.info_outline, size: 30, color: Colors.black),
-          ],
-        ),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
+            SizedBox(height: 20),
             Text(
               "This page outlines the important information that are needed in order to enjoy NetSecured.\n",
             ),
@@ -57,7 +47,7 @@ class InfoPage extends StatelessWidget {
               "How to unlock the modes",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            Text("• Score 200 points in Beginner mode to unlock Intermediate mode."),
+            Text("• Score 150 points in Beginner mode to unlock Intermediate mode."),
             Text("• Score 500 points in Beginner or Intermediate to unlock Advanced mode.\n"),
             Text(
               "Progress Tracker",

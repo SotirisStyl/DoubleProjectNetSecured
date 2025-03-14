@@ -4,37 +4,20 @@ import 'package:cs_app2/sign_up.dart';
 import 'package:cs_app2/sign_in.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 // Main Home Page for sign in / sign up / guest
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  Future<void> signInWithGoogle(BuildContext context) async {
-    try {
-      await Supabase.instance.client.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: 'https://wqmtemavpxxmanimglrz.supabase.co/auth/v1/callback',
-      );
-
-      // The user will be redirected externally, so this part won’t be called immediately.
-    } catch (e) {
-      print('Google Sign-In Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to sign in with Google')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView( // To handle overflow on smaller screens
-        child: Column(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            const SizedBox(height: 30),
             Center(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
                     'assets/AppImage.png',
@@ -89,24 +72,11 @@ class HomePage extends StatelessWidget {
                       },
                     );
                   }),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 10.0),
-                    child: Text(
-                      "---------------- OR CONTINUE WITH ----------------",
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(FontAwesomeIcons.google, size: 35),
-                    onPressed: () => signInWithGoogle(context),
-                    splashRadius: 25,
-                  ),
                 ],
               ),
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -118,6 +88,11 @@ class HomePage extends StatelessWidget {
       child: TextButton(
         style: ButtonStyle(
           backgroundColor: MaterialStateProperty.all(const Color(0xff6200EE)),
+          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
         ),
         onPressed: onPressed,
         child: Text(text, style: const TextStyle(color: Colors.white)),

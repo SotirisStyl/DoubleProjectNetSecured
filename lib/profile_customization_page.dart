@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fluttermoji/fluttermoji.dart';
-import 'package:cs_app2/info_page.dart';
 
 class ProfileCustomizationPage extends StatelessWidget {
   const ProfileCustomizationPage({super.key});
@@ -38,30 +37,12 @@ class ProfileCustomizationPage extends StatelessWidget {
       );
     } else {
       return Scaffold(
-        body: SingleChildScrollView( // Wrap the entire body in a SingleChildScrollView
-          child: Center(
+        body: Center(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 // Use a Row without Spacer
-                Padding(
-                  padding: const EdgeInsets.only(top: 35, left: 15, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Ensure proper spacing
-                    children: [
-                      const Icon(Icons.palette, size: 30, color: Colors.black),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => InfoPage()),
-                          );
-                        },
-                        child: const Icon(Icons.info_outline, size: 30, color: Colors.black),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
                 // Display the current avatar in a circle
                 FluttermojiCircleAvatar(
                   radius: 100, // sets the radius of the circle avatar
@@ -74,42 +55,10 @@ class ProfileCustomizationPage extends StatelessWidget {
                     color: Colors.grey,
                     borderRadius: BorderRadius.circular(10.0),
                   ),
-                  child: SizedBox(
-                    width: 100,  // Set the desired width of the button
-                    child: InkWell(
-                      onTap: () {
-                        // Your onPressed functionality
-                        FluttermojiSaveWidget();
-                      },
-                      splashColor: Colors.white,  // Optional: splash color on tap
-                      borderRadius: BorderRadius.circular(10.0),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0),  // Add padding to give the button some height
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,  // Centering the icon and text inside the Row
-                          children: [
-                            Icon(
-                              Icons.save, // You can change this to any icon
-                              color: Colors.white, // Change the icon color here
-                            ),
-                            const SizedBox(width: 10),  // Adding space between the save button and text
-                            const Text(
-                              'Save',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
           ),
-        ),
       );
     }
   }

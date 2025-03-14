@@ -67,7 +67,6 @@ class _ProfilePageState extends State<ProfilePage> {
   String _selectedColorName = 'Light Blue';
   bool _isTimerEnabled = false;
 
-
   final Map<String, Color> availableColors = {
     'White': Colors.white,
     'Light Grey': Colors.grey.shade100,
@@ -115,8 +114,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (username == null) return {};
 
-    final response = await Supabase.instance.client.from('users_data').select('''
+    final response =
+        await Supabase.instance.client.from('users_data').select('''
       username,
+      user_points,
       safe_internet_usage_questions_beginner, safe_internet_usage_questions_intermediate, safe_internet_usage_questions_advanced,
       cyber_hygiene_questions_beginner, cyber_hygiene_questions_intermediate, cyber_hygiene_questions_advanced,
       social_cyber_attaches_questions_beginner, social_cyber_attaches_questions_intermediate, social_cyber_attaches_questions_advanced,
@@ -136,27 +137,33 @@ class _ProfilePageState extends State<ProfilePage> {
     int total = 0;
 
     data.forEach((key, value) {
-      if (key == 'username') return;
+      if (key == 'username' || key == 'user_points') return; // Exclude user_points
+
       total++;
       if (value == true) completed++;
     });
 
-    return (completed / total) * 100;
+    return total == 0 ? 0.0 : (completed / total) * 100; // Avoid division by zero
   }
 
   Map<String, double> calculateModeProgress(Map<String, dynamic> data) {
     Map<String, int> total = {'beginner': 0, 'intermediate': 0, 'advanced': 0};
-    Map<String, int> completed = {'beginner': 0, 'intermediate': 0, 'advanced': 0};
+    Map<String, int> completed = {
+      'beginner': 0,
+      'intermediate': 0,
+      'advanced': 0
+    };
 
     data.forEach((key, value) {
-      if (key == 'username') return;
+      if (key == 'username'|| key == 'user_points') return;
 
       if (key.endsWith('_beginner')) {
         total['beginner'] = total['beginner']! + 1;
         if (value == true) completed['beginner'] = completed['beginner']! + 1;
       } else if (key.endsWith('_intermediate')) {
         total['intermediate'] = total['intermediate']! + 1;
-        if (value == true) completed['intermediate'] = completed['intermediate']! + 1;
+        if (value == true)
+          completed['intermediate'] = completed['intermediate']! + 1;
       } else if (key.endsWith('_advanced')) {
         total['advanced'] = total['advanced']! + 1;
         if (value == true) completed['advanced'] = completed['advanced']! + 1;
@@ -165,7 +172,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return {
       'Beginner': (completed['beginner']! / total['beginner']!) * 100,
-      'Intermediate': (completed['intermediate']! / total['intermediate']!) * 100,
+      'Intermediate':
+          (completed['intermediate']! / total['intermediate']!) * 100,
       'Advanced': (completed['advanced']! / total['advanced']!) * 100,
     };
   }
@@ -174,7 +182,8 @@ class _ProfilePageState extends State<ProfilePage> {
     if (progress < 50) {
       return Color.lerp(Colors.yellow, Color(0xFFF1B05B), progress / 50)!;
     } else if (progress < 100) {
-      return Color.lerp(Colors.orange, Colors.deepOrangeAccent, (progress - 50) / 50)!;
+      return Color.lerp(
+          Colors.orange, Colors.deepOrangeAccent, (progress - 50) / 50)!;
     } else {
       return Colors.green;
     }
@@ -191,7 +200,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('quiz_timer_enabled', value);
   }
-
 
   Widget buildProgressBar(double progress,
       {String label = "Overall\nProgress", double size = 100}) {
@@ -251,10 +259,12 @@ class _ProfilePageState extends State<ProfilePage> {
     return true;
   }
 
-  Future<void> generateCertificate(String username, Map<String, dynamic> progress) async {
+  Future<void> generateCertificate(
+      String username, Map<String, dynamic> progress) async {
     if (!isAdvancedCompleted(progress)) return;
 
-    TextEditingController nameController = TextEditingController(text: username);
+    TextEditingController nameController =
+        TextEditingController(text: username);
     String? enteredName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -290,15 +300,23 @@ class _ProfilePageState extends State<ProfilePage> {
             child: pw.Column(
               mainAxisAlignment: pw.MainAxisAlignment.center,
               children: [
-                pw.Text('Certificate of Achievement', style: pw.TextStyle(fontSize: 30, fontWeight: pw.FontWeight.bold)),
+                pw.Text('Certificate of Achievement',
+                    style: pw.TextStyle(
+                        fontSize: 30, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 20),
-                pw.Text('This is to certify that', style: pw.TextStyle(fontSize: 20)),
+                pw.Text('This is to certify that',
+                    style: pw.TextStyle(fontSize: 20)),
                 pw.SizedBox(height: 10),
-                pw.Text(enteredName, style: pw.TextStyle(fontSize: 25, fontWeight: pw.FontWeight.bold)),
+                pw.Text(enteredName,
+                    style: pw.TextStyle(
+                        fontSize: 25, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 20),
-                pw.Text('has successfully completed the advanced level of NetSecured with a score of $advancedProgress%', style: pw.TextStyle(fontSize: 20)),
+                pw.Text(
+                    'has successfully completed the advanced level of NetSecured with a score of $advancedProgress%',
+                    style: pw.TextStyle(fontSize: 20)),
                 pw.SizedBox(height: 50),
-                pw.Text('Date: ${DateTime.now().toLocal()}', style: pw.TextStyle(fontSize: 18)),
+                pw.Text('Date: ${DateTime.now().toLocal()}',
+                    style: pw.TextStyle(fontSize: 18)),
               ],
             ),
           );
@@ -312,15 +330,65 @@ class _ProfilePageState extends State<ProfilePage> {
     await OpenFile.open(file.path);
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final supabase = Supabase.instance.client;
+    final currentUser = supabase.auth.currentUser;
+
+    // Handle guest users or logged-out state
+    if (currentUser == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline, size: 80, color: Colors.black),
+              SizedBox(height: 20),
+              Text(
+                "You are currently a guest.",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Please sign in to unlock this feature.",
+                style: TextStyle(fontSize: 16, color: Colors.black),
+                textAlign: TextAlign.center,
+              ),
+              Container(
+                width: 150,
+                height: 40,
+                margin: const EdgeInsets.only(top: 20),
+                child: TextButton(
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(
+                      const Color(0xff6200EE),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                    );
+                  },
+                  child: const Text(
+                    'Back to Home',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: FutureBuilder<Map<String, dynamic>>(
         future: userProgressFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Scaffold();
           }
 
           if (snapshot.hasError) {
@@ -335,7 +403,8 @@ class _ProfilePageState extends State<ProfilePage> {
           progress.forEach((key, value) {
             if (key == 'username') return;
 
-            final quizPrefix = key.replaceAll(RegExp(r'_(beginner|intermediate|advanced)$'), '');
+            final quizPrefix = key.replaceAll(
+                RegExp(r'_(beginner|intermediate|advanced)$'), '');
             final level = key.split('_').last;
 
             quizMap[quizPrefix] ??= {};
@@ -343,69 +412,81 @@ class _ProfilePageState extends State<ProfilePage> {
           });
 
           return Container(
-              color: context.watch<ThemeProvider>().availableColors[
-              context.watch<ThemeProvider>().selectedColorName
-              ],
+            color: context.watch<ThemeProvider>().availableColors[
+                context.watch<ThemeProvider>().selectedColorName],
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        const Icon(Icons.person, size: 30, color: Colors.black),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () async {
-                            await Supabase.instance.client.auth.signOut();
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.remove('username');
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => const HomePage()),
-                            );
-                          },
-                          child: const Icon(Icons.logout, size: 30, color: Colors.black),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
+                    const SizedBox(height: 40),
                     FluttermojiCircleAvatar(radius: 100),
                     const SizedBox(height: 20),
-
-                    Text('Username: $username', style: const TextStyle(fontSize: 20)),
+                    const Text("Account",
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    Text('Username: $username',
+                        style: const TextStyle(fontSize: 20)),
+                    const SizedBox(height: 5),
+                    Text('Points: ${progress["user_points"] ?? 0}',
+                        style: const TextStyle(fontSize: 20)),
+                    const SizedBox(height: 5),
+                    ElevatedButton(
+                      style:  ButtonStyle(
+                        backgroundColor: WidgetStateProperty.all(
+                          const Color(0xff6200EE),
+                        ),
+                        textStyle: WidgetStateProperty.all(
+                          const TextStyle(color: Colors.white),
+                        )
+                      ),
+                      onPressed: () {
+                        logout();
+                      },
+                      child: const Text('Sign Out'),
+                    ),
                     const SizedBox(height: 20),
-
-                    const Text("Overall Progress", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    const Text("Overall Progress",
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 20),
                     buildProgressBar(progressPercentage, size: 120),
-
                     const SizedBox(height: 30),
-                    const Text("Mode Progress", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text("Mode Progress",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 20),
                     Wrap(
                       spacing: 24,
                       runSpacing: 24,
                       alignment: WrapAlignment.center,
-                      children: calculateModeProgress(progress).entries.map((entry) {
-                        return buildProgressBar(entry.value, label: entry.key, size: 100);
+                      children:
+                          calculateModeProgress(progress).entries.map((entry) {
+                        return buildProgressBar(entry.value,
+                            label: entry.key, size: 100);
                       }).toList(),
                     ),
-
                     const SizedBox(height: 30),
-                    const Text("Category Progress", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text("Category Progress",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 20),
-
                     Wrap(
                       spacing: 24,
                       runSpacing: 24,
                       alignment: WrapAlignment.center,
-                      children: quizMap.entries.map((entry) {
-                        String quizTitle = entry.key.replaceAll('_questions', '').split('_').map((word) {
-                          return word == 'gdpr' ? 'GDPR' : word[0].toUpperCase() + word.substring(1);
+                      children: quizMap.entries
+                          .where((entry) => entry.key != 'user_points')
+                          .map((entry) {
+                        String quizTitle = entry.key
+                            .replaceAll('_questions', '')
+                            .split('_')
+                            .map((word) {
+                          return word == 'gdpr'
+                              ? 'GDPR'
+                              : word[0].toUpperCase() + word.substring(1);
                         }).join(' ');
 
                         Map<String, bool> levels = entry.value;
@@ -413,12 +494,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         int completed = levels.values.where((done) => done).length;
                         double categoryProgress = (completed / total) * 100;
 
-                        return buildProgressBar(categoryProgress, label: quizTitle, size: 100);
+                        return buildProgressBar(categoryProgress,
+                            label: quizTitle, size: 100);
                       }).toList(),
                     ),
-
                     const SizedBox(height: 30),
-                    const Text("Quiz Timer", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text("Quiz Timer",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     SwitchListTile(
                       title: const Text("Enable Timer for Quizzes"),
                       value: _isTimerEnabled,
@@ -429,14 +512,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         saveTimerPreference(value);
                       },
                     ),
-
-
                     const SizedBox(height: 30),
-                    const Text("Customize Background", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text("Customize Background",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     DropdownButton<String>(
                       value: context.watch<ThemeProvider>().selectedColorName,
-                      items: context.watch<ThemeProvider>().availableColors.keys.map((String colorName) {
+                      items: context
+                          .watch<ThemeProvider>()
+                          .availableColors
+                          .keys
+                          .map((String colorName) {
                         return DropdownMenuItem<String>(
                           value: colorName,
                           child: Text(colorName),
@@ -444,21 +531,29 @@ class _ProfilePageState extends State<ProfilePage> {
                       }).toList(),
                       onChanged: (String? colorName) {
                         if (colorName != null) {
-                          context.read<ThemeProvider>().setBackgroundColor(colorName);
+                          context
+                              .read<ThemeProvider>()
+                              .setBackgroundColor(colorName);
                           setState(() {});
                         }
                       },
                     ),
-
-
                     const SizedBox(height: 30),
-                    const Text("Certificate", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text("Certificate",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 20),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xff6200EE),
+                        textStyle: const TextStyle(color: Colors.white),
+                      ),
                       onPressed: () async {
                         if (!isAdvancedCompleted(progress)) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('You must complete all advanced quizzes to download the certificate.')),
+                            SnackBar(
+                                content: Text(
+                                    'You must complete all advanced quizzes to download the certificate.')),
                           );
                           return;
                         }
@@ -466,7 +561,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         await generateCertificate(username, progress);
 
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Certificate generated successfully!')),
+                          SnackBar(
+                              content:
+                                  Text('Certificate generated successfully!')),
                         );
                       },
                       child: const Text('Download Certificate'),
@@ -478,6 +575,16 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         },
       ),
+    );
+  }
+
+  Future<void> logout() async {
+    await Supabase.instance.client.auth.signOut();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('username');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomePage()),
     );
   }
 }

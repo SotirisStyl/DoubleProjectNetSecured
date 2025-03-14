@@ -1,6 +1,0 @@
-[build]
-command = "bash build.sh"  # Use a custom build script
-publish = "build/web"      # The directory that contains the built app
-
-[[plugins]]
-package = "@netlify/plugin-flutter"

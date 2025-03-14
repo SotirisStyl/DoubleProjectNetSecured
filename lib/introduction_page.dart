@@ -1010,7 +1010,7 @@ class IntroductionPage extends StatelessWidget {
             'This introductory page has covered the fundamental topics of GDPR, including data protection principles, rights of individuals, lawful bases for data processing, and obligations for organizations. The following questions will test your understanding of these concepts, ensuring that you are well-versed in GDPR practices and principles.\n',
       ),
     ],
-    'IOT and Ai in Cybersecurity':
+    'IoT and Ai in Cybersecurity':
     [
       TextSpan(
         text: 'Introduction to IoT and AI in Cybersecurity\n\n',
@@ -1082,7 +1082,6 @@ class IntroductionPage extends StatelessWidget {
         text:
         'As IoT adoption continues to rise, the integration of AI in cybersecurity is essential for detecting and preventing cyber threats. AI-powered security solutions provide enhanced threat intelligence, automated defenses, and adaptive security measures, making them a crucial component in safeguarding IoT ecosystems. By following best practices and leveraging AI-driven cybersecurity solutions, organizations and individuals can better protect their IoT devices from emerging threats.\n',
       ),
-
     ]
   };
 
@@ -1090,7 +1089,7 @@ class IntroductionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('$topic Introduction'),
+        title: Text(topic),
           backgroundColor: context.watch<ThemeProvider>().selectedBackgroundColor,
       ),
       body: Center(
@@ -1118,9 +1117,12 @@ class IntroductionPage extends StatelessWidget {
               Align(
                 alignment: Alignment.center,
                 child: ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(const Color(0xff6200EE)),
+                    foregroundColor: MaterialStateProperty.all(Colors.white),
+                  ),
                   onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                    Navigator.pushReplacement(
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => QuizPage(

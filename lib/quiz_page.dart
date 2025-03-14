@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../theme_provider.dart';
 import 'package:cs_app2/app_main_page.dart';
+import 'package:fluttermoji/fluttermoji.dart';
+import 'package:avatar_glow/avatar_glow.dart';
 
 class QuizPage extends StatefulWidget {
   final String tableName;
@@ -20,18 +23,21 @@ class _QuizPageState extends State<QuizPage> {
   List<Map<String, dynamic>> questions = [];
   int currentIndex = 0;
   bool isLoading = true;
-  int points = 0; // Local points counter
+  int points = 0;
+  final bool _animate = true;
 
-  // Timer-related state
   bool _isTimerEnabled = false;
-  int _remainingTime = 300; // 5 minutes in seconds
+  int _remainingTime = 300;
   Timer? _quizTimer;
   bool _timeExpired = false;
+
+  String? selectedAnswer;
+  bool hasSubmitted = false;
 
   @override
   void initState() {
     super.initState();
-    _resetPoints(); // Reset points at the start of the quiz
+    _resetPoints();
     fetchQuestions();
     _loadTimerPreference();
   }
@@ -44,7 +50,7 @@ class _QuizPageState extends State<QuizPage> {
 
   Future<void> _resetPoints() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('points', 0); // Reset local stored points
+    await prefs.setInt('points', 0);
     setState(() {
       points = 0;
     });
@@ -56,7 +62,7 @@ class _QuizPageState extends State<QuizPage> {
           .from(widget.tableName)
           .select()
           .eq('difficulty_level', widget.difficulty)
-          .order('id', ascending: true); // Ensure ordered questions
+          .order('id', ascending: true);
 
       setState(() {
         questions = response;
@@ -82,14 +88,14 @@ class _QuizPageState extends State<QuizPage> {
     await prefs.setInt('points', newPoints);
 
     setState(() {
-      points = newPoints; // Update UI with new points
+      points = newPoints;
     });
   }
 
   Future<void> _updateUserPoints() async {
     final prefs = await SharedPreferences.getInstance();
     String? username = prefs.getString('username');
-    int finalScore = prefs.getInt('points') ?? 0; // Get final quiz score
+    int finalScore = prefs.getInt('points') ?? 0;
 
     if (username == null) {
       print("User not found");
@@ -97,7 +103,6 @@ class _QuizPageState extends State<QuizPage> {
     }
 
     try {
-      // Fetch existing points from Supabase
       final response = await supabase
           .from('users_data')
           .select('user_points')
@@ -107,7 +112,6 @@ class _QuizPageState extends State<QuizPage> {
       int currentPoints = response['user_points'] ?? 0;
       int updatedPoints = currentPoints + finalScore;
 
-      // Update total points in Supabase
       await supabase
           .from('users_data')
           .update({'user_points': updatedPoints})
@@ -119,28 +123,33 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  void _checkAnswer(String selectedAnswer) {
-    // If the timer is enabled and has expired, do nothing (or show a quick message)
+  bool _checkAnswer() {
     if (_isTimerEnabled && _timeExpired) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("Time is up!")));
-      return;
+      return false;
     }
+
+    if (selectedAnswer == null) return false;
 
     Map<String, dynamic> question = questions[currentIndex];
 
     if (selectedAnswer == question['correct_answer']) {
       int questionPoints = question['points'] ?? 0;
-      _updatePoints(questionPoints); // Update local points
+      _updatePoints(questionPoints);
     }
 
-    // Move to next question or finish quiz
+    return true;
+  }
+
+  void _continueToNextQuestion() {
     if (currentIndex < questions.length - 1) {
       setState(() {
         currentIndex++;
+        selectedAnswer = null;
+        hasSubmitted = false;
       });
     } else {
-      // If timer is still running, cancel it on quiz completion
       _quizTimer?.cancel();
       _showQuizCompletedDialog();
     }
@@ -150,7 +159,6 @@ class _QuizPageState extends State<QuizPage> {
     final prefs = await SharedPreferences.getInstance();
     int finalScore = prefs.getInt('points') ?? 0;
 
-    // If time expired (even if the user finished the last question), show a time expired message
     if (_isTimerEnabled && _timeExpired) {
       showDialog(
         context: context,
@@ -165,7 +173,7 @@ class _QuizPageState extends State<QuizPage> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => QuizMainPage()),
-                ); // Exit quiz page
+                );
               },
               child: const Text("OK"),
             ),
@@ -175,7 +183,6 @@ class _QuizPageState extends State<QuizPage> {
       return;
     }
 
-    // Update quiz progress if applicable (only if quiz is completed within time or timer is off)
     if (widget.difficulty == "beginner" && finalScore >= 35) {
       await _updateQuizProgress(widget.tableName, widget.difficulty);
     } else if (widget.difficulty == "intermediate" && finalScore >= 70) {
@@ -184,7 +191,6 @@ class _QuizPageState extends State<QuizPage> {
       await _updateQuizProgress(widget.tableName, widget.difficulty);
     }
 
-    // Update user points in Supabase after quiz completion
     await _updateUserPoints();
 
     showDialog(
@@ -262,7 +268,7 @@ class _QuizPageState extends State<QuizPage> {
   void _showTimeExpiredDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // Force the user to acknowledge
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text("Time Expired"),
         content: const Text(
@@ -274,7 +280,7 @@ class _QuizPageState extends State<QuizPage> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => QuizMainPage()),
-              );// Exit quiz page
+              );
             },
             child: const Text("OK"),
           ),
@@ -283,7 +289,6 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  // Helper function to format time (mm:ss)
   String formatDuration(int seconds) {
     int minutes = seconds ~/ 60;
     int secs = seconds % 60;
@@ -292,62 +297,156 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (questions.isNotEmpty) {
+      Map<String, dynamic> question = questions[currentIndex];
 
-    if (questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Quiz')),
-        body: const Center(child: Text('No questions available')),
-      );
-    }
+        backgroundColor: context.watch<ThemeProvider>().selectedBackgroundColor,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Back button and timer in same row
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: _isTimerEnabled
+                            ? Text(
+                          "Time Remaining: ${formatDuration(_remainingTime)}",
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        )
+                            : const SizedBox(),
+                      ),
+                    ),
+                    const SizedBox(width: 48), // balances the row visually
+                  ],
+                ),
 
-    Map<String, dynamic> question = questions[currentIndex];
+                AvatarGlow(
+                  startDelay: const Duration(milliseconds: 1000),
 
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Display timer if enabled
-              if (_isTimerEnabled) ...[
-                Text(
-                  "Time Remaining: ${formatDuration(_remainingTime)}",
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  glowColor: Colors.white,
+                  glowShape: BoxShape.circle,
+                  animate: _animate,
+                  curve: Curves.fastOutSlowIn,
+                  child: Material(
+                    elevation: 1.0,
+                    shape: const CircleBorder(),
+                    color: Colors.transparent,
+                    child: FluttermojiCircleAvatar(
+                      radius: 80,
+                      backgroundColor: Colors.transparent,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
+                Text(
+                  question['question_text'],
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+
+                if (question['question_type'] == 'multiple choice') ...[
+                  buildAnswerButton(question['answer_a']),
+                  buildAnswerButton(question['answer_b']),
+                  buildAnswerButton(question['answer_c']),
+                  buildAnswerButton(question['answer_d']),
+                ] else ...[
+                  buildAnswerButton('Yes'),
+                  buildAnswerButton('No'),
+                ],
+
+                if (!hasSubmitted)
+                  ElevatedButton(
+                    onPressed: selectedAnswer == null
+                        ? null
+                        : () {
+                      _checkAnswer();
+                      setState(() {
+                        hasSubmitted = true;
+                      });
+                    },
+                    child: const Text("Submit"),
+                  )
+                else
+                  ElevatedButton(
+                    onPressed: _continueToNextQuestion,
+                    child: const Text("Continue"),
+                  ),
+
+                Text(
+                  "Points: $points",
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 20),
               ],
-              Text(
-                question['question_text'],
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              if (question['question_type'] == 'multiple choice') ...[
-                buildAnswerButton(question['answer_a']),
-                buildAnswerButton(question['answer_b']),
-                buildAnswerButton(question['answer_c']),
-                buildAnswerButton(question['answer_d']),
-              ] else ...[
-                buildAnswerButton('Yes'),
-                buildAnswerButton('No'),
-              ],
-              const SizedBox(height: 20),
-              Text("Points: $points",
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } else {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+  }
+
+
+  bool isCorrectAnswer(String answer) {
+    return answer == questions[currentIndex]['correct_answer'];
   }
 
   Widget buildAnswerButton(String answer) {
+    final bool isSelected = selectedAnswer == answer;
+    final bool isCorrect = isCorrectAnswer(answer);
+
+    Color? borderColor;
+    Icon? icon;
+
+    if (hasSubmitted) {
+      if (isCorrect) {
+        borderColor = Colors.green;
+        icon = const Icon(Icons.check, color: Colors.green);
+      } else if (isSelected && !isCorrect) {
+        borderColor = Colors.red;
+        icon = const Icon(Icons.close, color: Colors.red);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: ElevatedButton(
-        onPressed: () => _checkAnswer(answer),
-        child: Text(answer),
+        style: ElevatedButton.styleFrom(
+          side: hasSubmitted
+              ? BorderSide(color: borderColor ?? Colors.transparent, width: 2)
+              : BorderSide.none,
+          backgroundColor:
+          isSelected && !hasSubmitted ? Colors.blueAccent : null,
+          foregroundColor: Colors.black,
+        ),
+        onPressed: hasSubmitted
+            ? null
+            : () {
+          setState(() {
+            selectedAnswer = answer;
+          });
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(child: Text(answer)),
+            if (hasSubmitted && (isSelected || isCorrect)) icon ?? const SizedBox(),
+          ],
+        ),
       ),
     );
   }
