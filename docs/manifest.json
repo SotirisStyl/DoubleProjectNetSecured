@@ -1,6 +1,6 @@
 {
-    "name": "cs_app2",
-    "short_name": "cs_app2",
+    "name": "NetSecured",
+    "short_name": "NetSecured",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
