@@ -63,8 +63,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
       await Supabase.instance.client.auth.signUp(
           email: emailController.text.trim(),
-          password: passwordController.text.trim()
-      );
+          password: passwordController.text.trim());
 
       _showMessage('Sign up successful!');
 
@@ -92,63 +91,70 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(padding: const EdgeInsets.only(top: 30)),
-            Image.asset(
-              'assets/AppImage.png',
-              fit: BoxFit.cover,
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height * 0.38,
+          child: Column(
+        children: [
+          Padding(padding: const EdgeInsets.only(top: 30)),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SizedBox(height: 30),
+                Image.asset(
+                  'assets/AppImage.png',
+                  fit: BoxFit.fitHeight,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height * 0.35,
+                ),
+                Image.asset(
+                  'assets/Lines.png',
+                  fit: BoxFit.cover,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height * 0.14,
+                ),
+                Container(
+                  margin: const EdgeInsets.only(top: 5),
+                  child: const Text(
+                    'Sign Up!',
+                    style: TextStyle(fontSize: 30),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 35),
+                  child: TextField(
+                    controller: usernameController,
+                    decoration: const InputDecoration(
+                        labelText: 'Username', prefixIcon: Icon(Icons.person)),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 35),
+                  child: TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                        labelText: 'Email', prefixIcon: Icon(Icons.email)),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 35),
+                  child: TextField(
+                    controller: passwordController,
+                    decoration: const InputDecoration(
+                        labelText: 'Password', prefixIcon: Icon(Icons.lock)),
+                    obscureText: true,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                isLoading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: signUp,
+                        child: const Text('Register'),
+                      ),
+              ],
             ),
-            Image.asset(
-              'assets/Lines.png',
-              fit: BoxFit.cover,
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height * 0.14,
-            ),
-            Container(
-              margin: const EdgeInsets.only(top: 5),
-              child: const Text(
-                'Sign Up!',
-                style: TextStyle(fontSize: 30),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 35),
-              child: TextField(
-                controller: usernameController,
-                decoration: const InputDecoration(
-                    labelText: 'Username', prefixIcon: Icon(Icons.person)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 35),
-              child: TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                    labelText: 'Email', prefixIcon: Icon(Icons.email)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 35),
-              child: TextField(
-                controller: passwordController,
-                decoration: const InputDecoration(
-                    labelText: 'Password', prefixIcon: Icon(Icons.lock)),
-                obscureText: true,
-              ),
-            ),
-            const SizedBox(height: 10),
-            isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-              onPressed: signUp,
-              child: const Text('Register'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        ],
+      )),
     );
   }
 }

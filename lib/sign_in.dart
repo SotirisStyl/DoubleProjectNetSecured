@@ -77,13 +77,14 @@ class LoginPage extends StatelessWidget {
             Padding(padding: const EdgeInsets.only(top: 30)),
             Center(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  SizedBox(height: 30),
                   Image.asset(
                     'assets/AppImage.png',
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fitHeight,
                     width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height * 0.38,
+                    height: MediaQuery.of(context).size.height * 0.35,
                   ),
                   Image.asset(
                     'assets/Lines.png',
@@ -124,12 +125,11 @@ class LoginPage extends StatelessWidget {
                     },
                     child: const Text('Login'),
                   ),
-                ],
-              ),
+              ],
             ),
-          ],
-        )
-      ),
+          ),
+        ],
+      )),
     );
   }
 }

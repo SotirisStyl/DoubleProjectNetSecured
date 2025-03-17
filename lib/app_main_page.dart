@@ -251,6 +251,12 @@ class _QuizHomePageState extends State<QuizHomePage> {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       children: [
+                        Image.asset(
+                          'assets/image1.png',
+                          fit: BoxFit.cover,
+                          width: 200,
+                          height: 200,
+                        ),
                         for (var mode in quizModes)
                           Card(
                             margin: const EdgeInsets.symmetric(vertical: 10),

@@ -110,60 +110,75 @@ class _BeginnerModePageState extends State<BeginnerModePage> {
         backgroundColor: context.watch<ThemeProvider>().selectedBackgroundColor,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
+          ? const Center(child: CircularProgressIndicator()) // Better than empty Scaffold
+          : ListView.builder(
         padding: const EdgeInsets.all(10.0),
-        child: ListView.builder(
-          itemCount: buttonTitles.length,
-          itemBuilder: (context, index) {
-            String title = buttonTitles[index];
-            String baseTable = tableNames[title]!;
-            String tableKey = "${baseTable}_${widget.difficulty}".toLowerCase();
-            bool isCompleted = quizProgress[tableKey] ?? false;
-
-            return Card(
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                tileColor: isCompleted ? Colors.green : Color(0xff6200EE),
-                textColor: Colors.white,
-                leading: Icon(
-                  categoryIcons[title], // Icon for each category
-                  size: 40.0,
-                  color: Colors.white,
+        itemCount: tableNames.length + 1, // +1 for the image at the top
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Image.asset(
+                  'assets/image1.png',
+                  fit: BoxFit.cover,
+                  width: 200,
+                  height: 200,
                 ),
-                title: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                trailing: isCompleted
-                    ? const Icon(Icons.check_circle, color: Colors.white)
-                    : null,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => IntroductionPage(
-                        topic: title,
-                        tableName: baseTable,
-                        difficulty: widget.difficulty,
-                      ),
-                    ),
-                  );
-                },
               ),
             );
-          },
-        ),
+          }
+
+          String title = tableNames.keys.elementAt(index - 1);
+          String baseTable = tableNames[title]!;
+          String tableKey = "${baseTable}_${widget.difficulty}".toLowerCase();
+          bool isCompleted = quizProgress[tableKey] ?? false;
+
+          return Card(
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: ListTile(
+              contentPadding:
+              const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+              tileColor: isCompleted
+                  ? Colors.green
+                  : const Color(0xff6200EE),
+              textColor: Colors.white,
+              leading: Icon(
+                categoryIcons[title],
+                size: 40.0,
+                color: Colors.white,
+              ),
+              title: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              trailing: isCompleted
+                  ? const Icon(Icons.check_circle, color: Colors.white)
+                  : null,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => IntroductionPage(
+                      topic: title,
+                      tableName: baseTable,
+                      difficulty: widget.difficulty,
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
+
     );
   }
 }

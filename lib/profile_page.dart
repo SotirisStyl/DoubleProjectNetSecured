@@ -5,10 +5,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_page.dart';
 import 'package:fluttermoji/fluttermoji.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:open_file/open_file.dart';
+
 import 'theme_provider.dart';
+
+import 'package:pdf/widgets.dart' as pw;
+import 'dart:typed_data';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
 
 // CustomPainter for the curved progress bar
 class CurvedProgressBarPainter extends CustomPainter {
@@ -291,6 +296,9 @@ class _ProfilePageState extends State<ProfilePage> {
     if (enteredName == null || enteredName.isEmpty) return;
 
     double advancedProgress = calculateModeProgress(progress)['Advanced'] ?? 0;
+    final ByteData bytes = await rootBundle.load('assets/AppImage.png');
+    final Uint8List imageData = bytes.buffer.asUint8List();
+    final image = pw.MemoryImage(imageData);
 
     final pdf = pw.Document();
     pdf.addPage(
@@ -298,23 +306,27 @@ class _ProfilePageState extends State<ProfilePage> {
         build: (pw.Context context) {
           return pw.Center(
             child: pw.Column(
-              mainAxisAlignment: pw.MainAxisAlignment.center,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
               children: [
+                pw.Image(image, height: 300),
+                pw.SizedBox(height: 30),
                 pw.Text('Certificate of Achievement',
                     style: pw.TextStyle(
                         fontSize: 30, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 20),
+                pw.SizedBox(height: 10),
                 pw.Text('This is to certify that',
                     style: pw.TextStyle(fontSize: 20)),
-                pw.SizedBox(height: 10),
+                pw.SizedBox(height: 5),
                 pw.Text(enteredName,
                     style: pw.TextStyle(
                         fontSize: 25, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 20),
+                pw.SizedBox(height: 5),
                 pw.Text(
-                    'has successfully completed the advanced level of NetSecured with a score of $advancedProgress%',
-                    style: pw.TextStyle(fontSize: 20)),
-                pw.SizedBox(height: 50),
+                    'has successfully completed the advanced level of NetSecured with a score of more than 70% on all Advanced Quizzes',
+                    style: pw.TextStyle(fontSize: 20),
+                    textAlign: pw.TextAlign.center),
+                pw.SizedBox(height: 10),
                 pw.Text('Date: ${DateTime.now().toLocal()}',
                     style: pw.TextStyle(fontSize: 18)),
               ],
@@ -438,8 +450,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         backgroundColor: WidgetStateProperty.all(
                           const Color(0xff6200EE),
                         ),
-                        textStyle: WidgetStateProperty.all(
-                          const TextStyle(color: Colors.white),
+                        foregroundColor: WidgetStateProperty.all(
+                          Colors.white,
                         )
                       ),
                       onPressed: () {
@@ -546,7 +558,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xff6200EE),
-                        textStyle: const TextStyle(color: Colors.white),
+                        foregroundColor: Colors.white,
                       ),
                       onPressed: () async {
                         if (!isAdvancedCompleted(progress)) {

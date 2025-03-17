@@ -27,9 +27,11 @@ class _AdvancedModePageState extends State<AdvancedModePage> {
     'Social Cyber Attaches': 'social_cyber_attaches_questions',
     'Basic Email Security': 'basic_email_security_questions',
     'Social Media Security': 'social_media_security_questions',
-    'Recognizing Social Engineering': 'recognizing_social_engineering_questions',
+    'Recognizing Social Engineering':
+        'recognizing_social_engineering_questions',
     'General Data Protection Regulation': 'gdpr_questions',
-    'Privacy, Safety, and Security Issues': 'privacy_safety_and_security_questions',
+    'Privacy, Safety, and Security Issues':
+        'privacy_safety_and_security_questions',
     'IoT and Ai in Cybersecurity': 'iot_and_ai_in_cybersecurity_questions',
   };
 
@@ -94,58 +96,74 @@ class _AdvancedModePageState extends State<AdvancedModePage> {
         backgroundColor: context.watch<ThemeProvider>().selectedBackgroundColor,
       ),
       body: isLoading
-          ? Scaffold()
-          : Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: ListView.builder(
-          itemCount: buttonTitles.length,
-          itemBuilder: (context, index) {
-            String title = buttonTitles[index];
-            String baseTable = tableNames[title]!;
-            String tableKey = "${baseTable}_${widget.difficulty}".toLowerCase();
-            bool isCompleted = quizProgress[tableKey] ?? false;
-
-            return Card(
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                tileColor: isCompleted ? Colors.green : Color(0xff6200EE), // Change color based on completion
-                textColor: Colors.white,
-                leading: Icon(
-                  categoryIcons[title], // Set the icon for each category
-                  size: 40.0,
-                  color: Colors.white,
-                ),
-                title: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                trailing: isCompleted
-                    ? const Icon(Icons.check_circle, color: Colors.white)
-                    : null,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => QuizPage(
-                        tableName: baseTable,
-                        difficulty: widget.difficulty,
+          ? const Center(
+              child: CircularProgressIndicator()) // Better than empty Scaffold
+          : ListView.builder(
+              padding: const EdgeInsets.all(10.0),
+              itemCount: tableNames.length + 1, // +1 for the image at the top
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 20.0),
+                      child: Image.asset(
+                        'assets/image1.png',
+                        fit: BoxFit.cover,
+                        width: 200,
+                        height: 200,
                       ),
                     ),
                   );
-                },
-              ),
-            );
-          },
-        ),
-      ),
+                }
+
+                String title = tableNames.keys.elementAt(index - 1);
+                String baseTable = tableNames[title]!;
+                String tableKey =
+                    "${baseTable}_${widget.difficulty}".toLowerCase();
+                bool isCompleted = quizProgress[tableKey] ?? false;
+
+                return Card(
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 15.0, horizontal: 20.0),
+                    tileColor:
+                        isCompleted ? Colors.green : const Color(0xff6200EE),
+                    textColor: Colors.white,
+                    leading: Icon(
+                      categoryIcons[title],
+                      size: 40.0,
+                      color: Colors.white,
+                    ),
+                    title: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    trailing: isCompleted
+                        ? const Icon(Icons.check_circle, color: Colors.white)
+                        : null,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizPage(
+                            tableName: baseTable,
+                            difficulty: widget.difficulty,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
     );
   }
 }

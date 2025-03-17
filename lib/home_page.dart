@@ -21,9 +21,9 @@ class HomePage extends StatelessWidget {
                 children: [
                   Image.asset(
                     'assets/AppImage.png',
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fitHeight,
                     width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height * 0.38,
+                    height: MediaQuery.of(context).size.height * 0.35,
                   ),
                   Image.asset(
                     'assets/Lines.png',
