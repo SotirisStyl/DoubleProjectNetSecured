@@ -21,6 +21,7 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
   final SupabaseClient supabase = Supabase.instance.client;
   List<Map<String, dynamic>> questions = [];
+  List<String> shuffledAnswers = [];
   int currentIndex = 0;
   bool isLoading = true;
   int points = 0;
@@ -64,19 +65,36 @@ class _QuizPageState extends State<QuizPage> {
           .eq('difficulty_level', widget.difficulty)
           .order('id', ascending: true);
 
-      setState(() {
-        questions = response;
-        isLoading = false;
-      });
-
-      if (questions.isEmpty) {
+      if (response.isEmpty) {
         print("No questions found!");
       }
+
+      setState(() {
+        questions = List<Map<String, dynamic>>.from(response);
+        questions.shuffle(); // Randomize question order
+        shuffledAnswers = _getShuffledAnswers(questions[0]); // Set initial shuffled answers
+        isLoading = false;
+      });
     } catch (error) {
       setState(() {
         isLoading = false;
       });
       print("Error fetching questions: $error");
+    }
+  }
+
+  List<String> _getShuffledAnswers(Map<String, dynamic> question) {
+    if (question['question_type'] == 'multiple choice') {
+      List<String> answers = [
+        question['answer_a'],
+        question['answer_b'],
+        question['answer_c'],
+        question['answer_d'],
+      ];
+      answers.shuffle();
+      return answers;
+    } else {
+      return ['Yes', 'No'];
     }
   }
 
@@ -148,6 +166,7 @@ class _QuizPageState extends State<QuizPage> {
         currentIndex++;
         selectedAnswer = null;
         hasSubmitted = false;
+        shuffledAnswers = _getShuffledAnswers(questions[currentIndex]); // Reshuffle answers
       });
     } else {
       _quizTimer?.cancel();
@@ -308,7 +327,6 @@ class _QuizPageState extends State<QuizPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // Back button and timer in same row
                 Row(
                   children: [
                     IconButton(
@@ -326,13 +344,12 @@ class _QuizPageState extends State<QuizPage> {
                             : const SizedBox(),
                       ),
                     ),
-                    const SizedBox(width: 48), // balances the row visually
+                    const SizedBox(width: 48),
                   ],
                 ),
 
                 AvatarGlow(
                   startDelay: const Duration(milliseconds: 1000),
-
                   glowColor: Colors.white,
                   glowShape: BoxShape.circle,
                   animate: _animate,
@@ -354,15 +371,7 @@ class _QuizPageState extends State<QuizPage> {
                   textAlign: TextAlign.center,
                 ),
 
-                if (question['question_type'] == 'multiple choice') ...[
-                  buildAnswerButton(question['answer_a']),
-                  buildAnswerButton(question['answer_b']),
-                  buildAnswerButton(question['answer_c']),
-                  buildAnswerButton(question['answer_d']),
-                ] else ...[
-                  buildAnswerButton('Yes'),
-                  buildAnswerButton('No'),
-                ],
+                ...shuffledAnswers.map((answer) => buildAnswerButton(answer)).toList(),
 
                 if (!hasSubmitted)
                   ElevatedButton(
@@ -386,7 +395,6 @@ class _QuizPageState extends State<QuizPage> {
                   "Points: $points",
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-
                 const SizedBox(height: 20),
               ],
             ),
@@ -399,7 +407,6 @@ class _QuizPageState extends State<QuizPage> {
       );
     }
   }
-
 
   bool isCorrectAnswer(String answer) {
     return answer == questions[currentIndex]['correct_answer'];
@@ -444,7 +451,8 @@ class _QuizPageState extends State<QuizPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Flexible(child: Text(answer)),
-            if (hasSubmitted && (isSelected || isCorrect)) icon ?? const SizedBox(),
+            if (hasSubmitted && (isSelected || isCorrect))
+              icon ?? const SizedBox(),
           ],
         ),
       ),
