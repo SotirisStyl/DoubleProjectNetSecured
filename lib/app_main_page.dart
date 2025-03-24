@@ -209,8 +209,8 @@ class _QuizHomePageState extends State<QuizHomePage> {
               'description': 'Step up your knowledge and skills.',
               'icon': FontAwesomeIcons.bookOpen,
               'color': const Color(0xff6200EE),
-              'unlocked': userPoints >= 150,
-              'onTap': userPoints >= 150
+              'unlocked': userPoints >= 30,
+              'onTap': userPoints >= 30
                   ? () {
                 Navigator.push(
                   context,
@@ -227,8 +227,8 @@ class _QuizHomePageState extends State<QuizHomePage> {
               'description': 'Challenge yourself with advanced topics.',
               'icon': FontAwesomeIcons.shieldHalved,
               'color': const Color(0xff6200EE),
-              'unlocked': userPoints >= 500,
-              'onTap': userPoints >= 500
+              'unlocked': userPoints >= 50,
+              'onTap': userPoints >= 50
                   ? () {
                 Navigator.push(
                   context,

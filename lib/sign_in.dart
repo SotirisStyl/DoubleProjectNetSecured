@@ -4,16 +4,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginPage extends StatelessWidget {
-  // Controllers for user input
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  LoginPage({super.key});
+  bool _obscurePassword = true; // Controls password visibility
 
   Future<void> signIn(BuildContext context) async {
     try {
-      // Perform sign-in using Supabase
       final AuthResponse response = await supabase.auth.signInWithPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
@@ -22,14 +27,13 @@ class LoginPage extends StatelessWidget {
       final user = response.user;
 
       if (user != null) {
-        // Store user ID in SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_id', user.id);
 
         final userResponse = await supabase
             .from('users_data')
-            .select('username') // Fetch username column
-            .eq('email', user.email as Object) // Filter by user_id
+            .select('username')
+            .eq('email', user.email as Object)
             .single();
 
         if (context.mounted) {
@@ -59,9 +63,6 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-
-
-  // Show messages using SnackBar
   void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -74,12 +75,12 @@ class LoginPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Padding(padding: const EdgeInsets.only(top: 30)),
+            const Padding(padding: EdgeInsets.only(top: 30)),
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  SizedBox(height: 30),
+                  const SizedBox(height: 30),
                   Image.asset(
                     'assets/AppImage.png',
                     fit: BoxFit.fitHeight,
@@ -104,32 +105,47 @@ class LoginPage extends StatelessWidget {
                     child: TextField(
                       controller: emailController,
                       decoration: const InputDecoration(
-                          labelText: 'Email', prefixIcon: Icon(Icons.email)),
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email),
+                      ),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 10, left: 35, right: 35),
                     child: TextField(
                       controller: passwordController,
-                      decoration: const InputDecoration(
-                          labelText: 'Password', prefixIcon: Icon(Icons.lock)),
-                      obscureText: true,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: const Icon(Icons.lock),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Use a simple ElevatedButton for login
                   ElevatedButton(
                     onPressed: () {
-                      // Call the signIn method
                       signIn(context);
                     },
                     child: const Text('Login'),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      )),
+          ],
+        ),
+      ),
     );
   }
 }
