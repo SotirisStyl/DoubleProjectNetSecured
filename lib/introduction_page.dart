@@ -16,7 +16,7 @@ class IntroductionPage extends StatelessWidget {
   });
 
   final Map<String, List<TextSpan>> introductions = {
-    'Privacy, Safety and Security Issues': [
+    'Privacy, Safety, and Security Issues': [
       TextSpan(
         text: "Introduction to Privacy, Safety, and Security Issues\n\n",
         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
