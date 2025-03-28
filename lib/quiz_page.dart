@@ -322,88 +322,93 @@ class _QuizPageState extends State<QuizPage> {
       return Scaffold(
         backgroundColor: context.watch<ThemeProvider>().selectedBackgroundColor,
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: _isTimerEnabled
-                            ? Text(
-                          "Time Remaining: ${formatDuration(_remainingTime)}",
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        )
-                            : const SizedBox(),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: _isTimerEnabled
+                              ? Text(
+                            "Time Remaining: ${formatDuration(_remainingTime)}",
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          )
+                              : const SizedBox(),
+                        ),
+                      ),
+                      Text(
+                        "${currentIndex + 1}/${questions.length}",
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  AvatarGlow(
+                    startDelay: const Duration(milliseconds: 1000),
+                    glowColor: Colors.white,
+                    glowShape: BoxShape.circle,
+                    animate: _animate,
+                    curve: Curves.fastOutSlowIn,
+                    child: Material(
+                      elevation: 1.0,
+                      shape: const CircleBorder(),
+                      color: Colors.transparent,
+                      child: FluttermojiCircleAvatar(
+                        radius: 80,
+                        backgroundColor: Colors.transparent,
                       ),
                     ),
-                    const SizedBox(width: 48),
-                  ],
-                ),
-
-                AvatarGlow(
-                  startDelay: const Duration(milliseconds: 1000),
-                  glowColor: Colors.white,
-                  glowShape: BoxShape.circle,
-                  animate: _animate,
-                  curve: Curves.fastOutSlowIn,
-                  child: Material(
-                    elevation: 1.0,
-                    shape: const CircleBorder(),
-                    color: Colors.transparent,
-                    child: FluttermojiCircleAvatar(
-                      radius: 80,
-                      backgroundColor: Colors.transparent,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    question['question_text'],
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 5),
+                  ...shuffledAnswers.map((answer) => buildAnswerButton(answer)).toList(),
+                  const SizedBox(height: 5),
+                  if (!hasSubmitted)
+                    ElevatedButton(
+                      onPressed: selectedAnswer == null
+                          ? null
+                          : () {
+                        _checkAnswer();
+                        setState(() {
+                          hasSubmitted = true;
+                        });
+                      },
+                      child: const Text("Submit"),
+                    )
+                  else
+                    ElevatedButton(
+                      onPressed: _continueToNextQuestion,
+                      child: const Text("Continue"),
                     ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "Points: $points",
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  question['question_text'],
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-
-                ...shuffledAnswers.map((answer) => buildAnswerButton(answer)).toList(),
-
-                if (!hasSubmitted)
-                  ElevatedButton(
-                    onPressed: selectedAnswer == null
-                        ? null
-                        : () {
-                      _checkAnswer();
-                      setState(() {
-                        hasSubmitted = true;
-                      });
-                    },
-                    child: const Text("Submit"),
-                  )
-                else
-                  ElevatedButton(
-                    onPressed: _continueToNextQuestion,
-                    child: const Text("Continue"),
-                  ),
-
-                Text(
-                  "Points: $points",
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       );
     } else {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: Scaffold()),
       );
     }
   }
