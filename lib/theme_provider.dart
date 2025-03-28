@@ -12,6 +12,9 @@ class ThemeProvider extends ChangeNotifier {
     'Light Blue': Color(0xFFE3F2FD),
     'Mint Green': Color(0xFFE0F2F1),
     'Light Blue Accent': Colors.lightBlueAccent,
+    'Pink': Color(0xFFFFCDD2),
+    'Pink Accent': Colors.pinkAccent,
+    'Purple': Colors.purple,
   };
 
   Color get backgroundColor => _backgroundColor;
