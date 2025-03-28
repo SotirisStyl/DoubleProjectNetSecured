@@ -114,7 +114,7 @@ Users can:
 <!-- CONTACT -->
 ## Contact
 
-Sotiris Stylianou - sstylianou2@uclan.ac.uk - (https://github.com/SotirisSty)
+Sotiris Stylianou - sstylianou2@uclan.ac.uk - (https://github.com/SotirisStyl)
 
 Project Link: (https://github.com/SotirisStyl/DoubleProjectNetSecured)
 
