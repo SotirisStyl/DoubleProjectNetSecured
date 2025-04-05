@@ -345,7 +345,7 @@ class IntroductionPage extends StatelessWidget {
         text: "By following these guidelines, you can browse the internet more safely, protect your personal information, and avoid common online threats. Safe internet usage isn’t just about technology—it’s about being aware, cautious, and proactive.\n"
       )
     ],
-    'Social Cyber Attaches': [
+    'Social Cyber Attacks': [
         const TextSpan(
           text:"Introduction to Social Cyber Attacks\n",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
