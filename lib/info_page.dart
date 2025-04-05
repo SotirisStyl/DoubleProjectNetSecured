@@ -61,8 +61,8 @@ class InfoPage extends StatelessWidget {
               "How to unlock the modes",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            Text("• Score 30 points in Beginner mode to unlock Intermediate mode."),
-            Text("• Score 50 points in Beginner or Intermediate to unlock Advanced mode.\n"),
+            Text("• Score 150 points in Beginner mode to unlock Intermediate mode."),
+            Text("• Score 400 points in Beginner or Intermediate to unlock Advanced mode.\n"),
             Text(
               "Progress Tracker",
               style: TextStyle(fontWeight: FontWeight.bold),
