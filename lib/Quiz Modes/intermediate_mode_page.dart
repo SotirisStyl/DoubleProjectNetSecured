@@ -24,21 +24,19 @@ class _IntermediateModePageState extends State<IntermediateModePage> {
   final Map<String, String> tableNames = {
     'Safe Internet Usage': 'safe_internet_usage_questions',
     'Cyber Hygiene': 'cyber_hygiene_questions',
-    'Social Cyber Attaches': 'social_cyber_attaches_questions',
+    'Social Cyber Attacks': 'social_cyber_attacks_questions',
     'Basic Email Security': 'basic_email_security_questions',
     'Social Media Security': 'social_media_security_questions',
-    'Recognizing Social Engineering':
-        'recognizing_social_engineering_questions',
+    'Recognizing Social Engineering': 'recognizing_social_engineering_questions',
     'General Data Protection Regulation': 'gdpr_questions',
-    'Privacy, Safety, and Security Issues':
-        'privacy_safety_and_security_questions',
+    'Privacy, Safety, and Security Issues': 'privacy_safety_and_security_questions',
     'IoT and Ai in Cybersecurity': 'iot_and_ai_in_cybersecurity_questions',
   };
 
   final Map<String, IconData> categoryIcons = {
     'Cyber Hygiene': FontAwesomeIcons.shieldAlt,
     'Safe Internet Usage': FontAwesomeIcons.networkWired,
-    'Social Cyber Attaches': FontAwesomeIcons.usersSlash,
+    'Social Cyber Attacks': FontAwesomeIcons.usersSlash,
     'Basic Email Security': FontAwesomeIcons.envelopeOpenText,
     'Social Media Security': FontAwesomeIcons.facebookF,
     'IoT and Ai in Cybersecurity': FontAwesomeIcons.robot,
