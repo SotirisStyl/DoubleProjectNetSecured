@@ -125,7 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
       user_points,
       safe_internet_usage_questions_beginner, safe_internet_usage_questions_intermediate, safe_internet_usage_questions_advanced,
       cyber_hygiene_questions_beginner, cyber_hygiene_questions_intermediate, cyber_hygiene_questions_advanced,
-      social_cyber_attaches_questions_beginner, social_cyber_attaches_questions_intermediate, social_cyber_attaches_questions_advanced,
+      social_cyber_attacks_questions_beginner, social_cyber_attacks_questions_intermediate, social_cyber_attacks_questions_advanced,
       basic_email_security_questions_beginner, basic_email_security_questions_intermediate, basic_email_security_questions_advanced,
       social_media_security_questions_beginner, social_media_security_questions_intermediate, social_media_security_questions_advanced,
       recognizing_social_engineering_questions_beginner, recognizing_social_engineering_questions_intermediate, recognizing_social_engineering_questions_advanced,
@@ -246,7 +246,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final advancedQuizzes = [
       'safe_internet_usage_questions_advanced',
       'cyber_hygiene_questions_advanced',
-      'social_cyber_attaches_questions_advanced',
+      'social_cyber_attacks_questions_advanced',
       'basic_email_security_questions_advanced',
       'social_media_security_questions_advanced',
       'recognizing_social_engineering_questions_advanced',
