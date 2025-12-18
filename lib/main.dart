@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';
 import 'package:fluttermoji/fluttermoji.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'theme_provider.dart';
 import 'home_page.dart';
 import 'app_main_page.dart';
@@ -10,9 +11,11 @@ import 'app_main_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load();
+
   await Supabase.initialize(
-    url: 'https://wqmtemavpxxmanimglrz.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxbXRlbWF2cHh4bWFuaW1nbHJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUxMzcxODgsImV4cCI6MjA1MDcxMzE4OH0.dnKQTpoJr4OYSzOn29ll3PfSdCyiEnpWRc_3i5dZGfA',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     debug: false,
   );
 

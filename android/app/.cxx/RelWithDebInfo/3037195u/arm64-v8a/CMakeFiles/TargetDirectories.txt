@@ -1,0 +1,2 @@
+C:/Users/User/StudioProjects/DoubleProjectNetSecured/android/app/.cxx/RelWithDebInfo/3037195u/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/User/StudioProjects/DoubleProjectNetSecured/android/app/.cxx/RelWithDebInfo/3037195u/arm64-v8a/CMakeFiles/rebuild_cache.dir

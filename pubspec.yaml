@@ -48,6 +48,7 @@ dependencies:
   open_file: ^3.5.10
   provider: ^6.1.2
   google_sign_in: ^6.3.0
+  flutter_dotenv: ^5.1.0
   flutter_launcher_icons: ^0.14.3
   avatar_glow: ^3.0.1
 
@@ -78,6 +79,7 @@ flutter:
     - assets/Lines.png
     - assets/AppImage.png
     - assets/image1.png
+    - .env
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
