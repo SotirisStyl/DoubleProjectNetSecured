@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_page.dart';
 import 'package:fluttermoji/fluttermoji.dart';
+import 'friends_page.dart';
 
 import 'theme_provider.dart';
 
@@ -59,7 +60,9 @@ class CurvedProgressBarPainter extends CustomPainter {
 }
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final VoidCallback? onViewFriends;
+
+  const ProfilePage({super.key, this.onViewFriends});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -205,6 +208,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('quiz_timer_enabled', value);
   }
+
+
 
   Widget buildProgressBar(double progress,
       {String label = "Overall\nProgress", double size = 100}) {
@@ -444,9 +449,32 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 5),
                     Text('Points: ${progress["user_points"] ?? 0}',
                         style: const TextStyle(fontSize: 20)),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.all(
+                              const Color(0xff6200EE),
+                            ),
+                            foregroundColor: WidgetStateProperty.all(
+                              Colors.white,
+                            ),
+                          ),
+                          onPressed: () {
+                            widget.onViewFriends?.call();
+                          },
+                          icon: const Icon(Icons.people),
+                          label: const Text('View Friends'),
+                        ),
+                        const SizedBox(width: 10),
+
+                      ],
+                    ),
                     const SizedBox(height: 5),
                     ElevatedButton(
-                      style:  ButtonStyle(
+                      style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.all(
                           const Color(0xff6200EE),
                         ),

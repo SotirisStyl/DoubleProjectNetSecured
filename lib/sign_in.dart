@@ -30,35 +30,47 @@ class _LoginPageState extends State<LoginPage> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_id', user.id);
 
-        final userResponse = await supabase
-            .from('users_data')
-            .select('username')
-            .eq('email', user.email as Object)
-            .single();
+        try {
+          final userResponse = await supabase
+              .from('users_data')
+              .select('username')
+              .eq('email', user.email as Object)
+              .single();
 
-        if (context.mounted) {
-          String username = userResponse['username'];
-          await prefs.setString('username', username);
+          if (context.mounted) {
+            String username = userResponse['username'];
+            await prefs.setString('username', username);
 
-          _showMessage(context, 'Sign In successful!');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => QuizMainPage()),
-          );
+            _showMessage(context, 'Sign In successful!');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => QuizMainPage()),
+            );
+          }
+        } catch (dbError) {
+          print('Database query error: $dbError');
+          if (context.mounted) {
+            _showMessage(context, 'Error fetching user data. Please try again.');
+          }
         }
       } else {
         if (context.mounted) {
           _showMessage(context, 'Invalid email or password.');
         }
       }
-    } on AuthException {
+    } on AuthException catch (e) {
       if (context.mounted) {
-        _showMessage(context, 'Invalid email or password.');
+        print('Auth error: $e');
+        if (e.message.contains('email_not_confirmed')) {
+          _showMessage(context, 'Please confirm your email before signing in. Check your email inbox.');
+        } else {
+          _showMessage(context, 'Invalid email or password. ${e.message}');
+        }
       }
     } catch (e) {
       if (context.mounted) {
+        print('General error: $e');
         _showMessage(context, 'An error occurred. Please try again.');
-        print(e);
       }
     }
   }

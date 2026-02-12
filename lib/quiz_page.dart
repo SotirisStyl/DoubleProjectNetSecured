@@ -7,12 +7,23 @@ import '../theme_provider.dart';
 import 'package:cs_app2/app_main_page.dart';
 import 'package:fluttermoji/fluttermoji.dart';
 import 'package:avatar_glow/avatar_glow.dart';
+import 'multiplayer_mode_page.dart';
 
 class QuizPage extends StatefulWidget {
   final String tableName;
   final String difficulty;
+  final List<Map<String, dynamic>>? preselectedQuestions;
+  final int? challengeId;
+  final String? opponentUsername;
 
-  const QuizPage({super.key, required this.tableName, required this.difficulty});
+  const QuizPage({
+    super.key, 
+    required this.tableName, 
+    required this.difficulty, 
+    this.preselectedQuestions,
+    this.challengeId,
+    this.opponentUsername,
+  });
 
   @override
   _QuizPageState createState() => _QuizPageState();
@@ -46,6 +57,7 @@ class _QuizPageState extends State<QuizPage> {
   @override
   void dispose() {
     _quizTimer?.cancel();
+    _opponentScoreNotifier.dispose();
     super.dispose();
   }
 
@@ -59,6 +71,17 @@ class _QuizPageState extends State<QuizPage> {
 
   Future<void> fetchQuestions() async {
     try {
+      if (widget.preselectedQuestions != null && widget.preselectedQuestions!.isNotEmpty) {
+        setState(() {
+          questions = List<Map<String, dynamic>>.from(widget.preselectedQuestions!);
+          print('Preselected questions loaded. First question keys: ${questions[0].keys.toList()}');
+          print('First question: ${questions[0]}');
+          shuffledAnswers = _getShuffledAnswers(questions[0]);
+          isLoading = false;
+        });
+        return;
+      }
+
       final response = await supabase
           .from(widget.tableName)
           .select()
@@ -84,17 +107,24 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   List<String> _getShuffledAnswers(Map<String, dynamic> question) {
-    if (question['question_type'] == 'multiple choice') {
-      List<String> answers = [
-        question['answer_a'],
-        question['answer_b'],
-        question['answer_c'],
-        question['answer_d'],
-      ];
+    String qType = question['question_type']?.toString().toLowerCase() ?? 'multiple choice';
+    
+    if (qType.contains('yes/no') || qType == 'yes/no') {
+      List<String> answers = ['Yes', 'No'];
       answers.shuffle();
       return answers;
     } else {
-      return ['Yes', 'No'];
+      List<String> answers = [
+        question['answer_a']?.toString() ?? '',
+        question['answer_b']?.toString() ?? '',
+      ];
+      // Only add answer_c and answer_d if they're not null
+      if (question['answer_c'] != null) answers.add(question['answer_c'].toString());
+      if (question['answer_d'] != null) answers.add(question['answer_d'].toString());
+      
+      answers.removeWhere((a) => a.isEmpty);
+      answers.shuffle();
+      return answers;
     }
   }
 
@@ -212,12 +242,128 @@ class _QuizPageState extends State<QuizPage> {
 
     await _updateUserPoints();
 
+    // Handle multiplayer results
+    if (widget.challengeId != null) {
+      await _saveMultiplayerScore(finalScore);
+      _showMultiplayerResults(finalScore);
+    } else {
+      // Regular quiz completion
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Quiz Completed"),
+          content: Text("You scored $finalScore points!"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => QuizMainPage()),
+                );
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _saveMultiplayerScore(int score) async {
+    if (widget.challengeId == null) return;
+    
+    try {
+      final username = (await SharedPreferences.getInstance()).getString('username');
+      if (username == null) return;
+
+      // Fetch current player_scores
+      final challengeData = await supabase
+          .from('multiplayer_challenges')
+          .select('player_scores')
+          .eq('id', widget.challengeId!)
+          .single();
+
+      final playerScores = Map<String, dynamic>.from(challengeData['player_scores'] as Map<String, dynamic>? ?? {});
+      playerScores[username] = score;
+
+      // Update with the new scores
+      await supabase
+          .from('multiplayer_challenges')
+          .update({'player_scores': playerScores})
+          .eq('id', widget.challengeId!);
+      
+      print('Saved score $score for $username in challenge ${widget.challengeId}');
+    } catch (e) {
+      print('Error saving multiplayer score: $e');
+    }
+  }
+
+  void _showMultiplayerResults(int yourScore) async {
+    if (widget.challengeId == null) return;
+    
+    int? opponentScore;
+
+    if (!mounted) return;
+
+    // Log context for debugging
+    print('Showing multiplayer results: challengeId=${widget.challengeId}, opponent=${widget.opponentUsername}, yourScore=$yourScore');
+
+    // Start polling once and show dialog immediately
+    _startPolling();
+
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text("Quiz Completed"),
-        content: Text("You scored $finalScore points!"),
+        title: const Text("Quiz Results"),
+        content: ValueListenableBuilder<int?>(
+          valueListenable: _opponentScoreNotifier,
+          builder: (context, opponentScore, child) {
+            final live = opponentScore;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Your Score: $yourScore', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Text('${widget.opponentUsername}\'s Score: ${live ?? "..."}', 
+                  style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic)),
+                const SizedBox(height: 16),
+                if (live != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: yourScore > live ? Colors.green[100] : Colors.red[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      yourScore > live ? 'You Won! 🎉' : yourScore == live ? 'It\'s a Tie!' : 'You Lost',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(
+                    height: 30,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MultiplayerModePage()),
+              );
+            },
+            child: const Text("Rematch"),
+          ),
           TextButton(
             onPressed: () {
               Navigator.of(context).popUntil((route) => route.isFirst);
@@ -226,11 +372,66 @@ class _QuizPageState extends State<QuizPage> {
                 MaterialPageRoute(builder: (context) => QuizMainPage()),
               );
             },
-            child: const Text("OK"),
+            child: const Text("Back to Home"),
           ),
         ],
       ),
     );
+  }
+
+  final ValueNotifier<int?> _opponentScoreNotifier = ValueNotifier(null);
+  bool _isPolling = false;
+
+  void _startPolling() {
+    if (_isPolling) return;
+    _isPolling = true;
+    // run polling in background
+    _pollOpponentScore();
+  }
+
+  Future<void> _pollOpponentScore() async {
+    try {
+      int pollCount = 0;
+      const int maxPolls = 30; // Poll for up to 60 seconds
+
+      while (_opponentScoreNotifier.value == null && pollCount < maxPolls && mounted) {
+        await Future.delayed(const Duration(seconds: 2));
+        pollCount++;
+
+        try {
+          final challengeData = await supabase
+              .from('multiplayer_challenges')
+              .select('player_scores')
+              .eq('id', widget.challengeId!)
+              .single();
+
+          final raw = challengeData['player_scores'];
+          // Log raw value and types for debugging
+          print('Fetched player_scores raw: $raw (type: ${raw.runtimeType})');
+          final playerScores = (raw is Map) ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+          print('Parsed player_scores keys: ${playerScores.keys.toList()} (opponentUsername=${widget.opponentUsername})');
+
+          if (widget.opponentUsername != null && playerScores.containsKey(widget.opponentUsername)) {
+            final scoreVal = playerScores[widget.opponentUsername];
+            print('Found value for opponent: $scoreVal (type: ${scoreVal.runtimeType})');
+            final score = (scoreVal is int) ? scoreVal : (scoreVal is num ? scoreVal.toInt() : null);
+            if (score != null) {
+              _opponentScoreNotifier.value = score;
+              print('Opponent score found: $score');
+              break;
+            }
+          }
+        } catch (e) {
+          print('Error polling for opponent score: $e');
+        }
+      }
+
+      if (_opponentScoreNotifier.value == null && pollCount >= maxPolls) {
+        _opponentScoreNotifier.value = 0; // Mark as timeout
+      }
+    } catch (e) {
+      print('Error in polling: $e');
+    }
   }
 
   Future<void> _updateQuizProgress(String category, String difficulty) async {
@@ -370,7 +571,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  question['question_text'],
+                  question['questions_text'] ?? question['question_text'] ?? 'Question',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),

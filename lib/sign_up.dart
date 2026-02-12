@@ -68,6 +68,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
       if (usernameResponse.isNotEmpty) {
         _showMessage('Username already exists. Please choose a different one.');
+        setState(() => isLoading = false);
         return;
       }
 
@@ -79,6 +80,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
       if (emailResponse.isNotEmpty) {
         _showMessage('Email already exists. Please choose a different one.');
+        setState(() => isLoading = false);
         return;
       }
 
@@ -90,22 +92,36 @@ class _SignUpPageState extends State<SignUpPage> {
 
       if (response.user != null) {
         // Only insert to users_data if sign-up succeeded
-        await Supabase.instance.client.from('users_data').insert({
-          'username': username,
-          'email': email,
-        });
-
-        _showMessage('Sign up successful!');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
+        try {
+          await Supabase.instance.client.from('users_data').insert({
+            'username': username,
+            'email': email,
+            'user_points': 0,
+          });
+          
+          print('User data inserted successfully');
+          
+          // Check if email confirmation is required
+          if (response.user?.emailConfirmedAt == null && response.user?.userMetadata?['email_verified'] != true) {
+            _showMessage('Sign up successful! Please check your email to confirm your account.');
+          } else {
+            _showMessage('Sign up successful!');
+          }
+          
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomePage()),
+          );
+        } catch (insertError) {
+          print('Error inserting user data: $insertError');
+          _showMessage('Account created but failed to save profile. Please contact support.');
+        }
       } else {
         _showMessage('Signup failed. Please try again.');
       }
     } catch (e) {
-      _showMessage('An error occurred. Please try again.');
       print('SignUp Error: $e');
+      _showMessage('An error occurred. Please try again.');
     } finally {
       setState(() {
         isLoading = false;
